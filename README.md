@@ -1,159 +1,76 @@
-# Turborepo starter
+# Soulani Auto Garage 🚗✨
 
-This Turborepo starter is maintained by the Turborepo core team.
+Soulani Auto Garage is a modern, full-stack monorepo application designed to manage a premium automotive business. It handles vehicle inventory, sales, long-term rentals, inspections, and customer CRM all under one beautifully designed platform.
 
-## Using this example
+## 🏗️ Architecture
 
-Run the following command:
+This project is built using [Turborepo](https://turborepo.org/) and is structured into the following applications:
 
-```sh
-npx create-turbo@latest
-```
+- **`apps/web`**: The frontend Admin Portal built with [Next.js](https://nextjs.org/) (App Router), React Hook Form, Zod, TailwindCSS, and SweetAlert2.
+- **`apps/api`**: The backend REST API built with [NestJS](https://nestjs.com/), providing robust endpoints, JWT authentication, and global exception handling.
+- **Database Layer**: Managed by [Prisma ORM](https://www.prisma.io/) connecting to a MySQL database, featuring strict uniqueness constraints, soft deletes, and robust relational mapping.
 
-## What's inside?
+## 🚀 Current Progress: Phase 2 Complete
 
-This Turborepo includes the following packages/apps:
+The application has successfully completed **Phase 1 (Foundation)** and **Phase 2 (Vehicle Inventory & Content Management)**.
 
-### Apps and Packages
+### Features Implemented:
+- **Authentication & RBAC:** Secure JWT-based login with role-based access control (Super Admin, Sales Staff, Rental Staff). Session expiration is strictly enforced globally.
+- **Inventory CRUD:** Comprehensive vehicle management including make, model, year, VIN, and plate number tracking.
+- **Image Pipeline:** Full image upload functionality using Multer, supporting primary image selection, dynamic static serving, and CORS handling.
+- **Inspections Module:** A dedicated tab for logging detailed vehicle inspection statuses across Engine, Transmission, Suspension, Electrical, A/C, and more.
+- **Pricing Configuration:** Granular pricing settings bifurcated by vehicle type (Sale vs. Rental), including daily rates and deposit amounts.
+- **Audit Logging:** Automated, background tracking of core events (CREATE, UPDATE, DELETE) across the inventory.
+- **Pagination & Filtering:** Efficient server-side pagination with API-level filtering.
+- **Error Handling:** Custom Prisma Exception Filters translating database constraint errors (e.g., duplicate plate numbers) into human-readable UI alerts.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## 🛠️ Getting Started
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Prerequisites
+- Node.js (v18+)
+- pnpm (recommended)
+- MySQL Database
 
-### Utilities
+### Installation
 
-This Turborepo has some additional tools already setup for you:
+1. Install dependencies across the monorepo:
+   ```sh
+   pnpm install
+   ```
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+2. Configure environment variables. Ensure both `apps/api/.env` and `apps/web/.env.local` are set up.
+   ```env
+   # API Example
+   DATABASE_URL="mysql://user:password@localhost:3306/soulani_garage"
+   JWT_SECRET="your-super-secret-key"
+   
+   # Web Example
+   NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
+   ```
 
-### Build
+3. Run database migrations:
+   ```sh
+   cd apps/api
+   npx prisma generate
+   npx prisma db push
+   ```
 
-To build all apps and packages, run the following command:
+### Running Locally
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
+To start both the Web App and the API concurrently:
 
 ```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+pnpm dev
 ```
+- The **Frontend** will be available at `http://localhost:3000`
+- The **API** will be available at `http://localhost:3001/api/v1`
 
-### Develop
+## 🔮 Upcoming Phases
+- **Phase 3:** Lead Management & Sales CRM
+- **Phase 4:** Rental Operations & Booking Calendar
+- **Phase 5:** Notifications & Follow-ups
+- **Phase 6:** Owner Analytics Dashboard & CMS
+- **Phase 7:** Production Hardening & Cloud Deployment
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+---
+*Built with ❤️ for Soulani Auto Garage.*
