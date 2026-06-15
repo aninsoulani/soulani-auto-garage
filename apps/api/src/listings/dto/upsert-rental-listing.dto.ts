@@ -2,7 +2,7 @@ import { IsNumber, IsOptional, IsBoolean, Min } from 'class-validator';
 
 export class UpsertRentalListingDto {
   @IsNumber()
-  @Min(0)
+  @Min(1)
   dailyRate: number;
 
   @IsNumber()

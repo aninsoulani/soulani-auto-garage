@@ -2,7 +2,7 @@ import { IsNumber, IsInt, Min } from 'class-validator';
 
 export class UpsertSalesListingDto {
   @IsNumber()
-  @Min(0)
+  @Min(1)
   price: number;
 
   @IsInt()

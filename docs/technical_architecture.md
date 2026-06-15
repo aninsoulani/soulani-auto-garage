@@ -550,7 +550,10 @@ Environment Variables                Persistent Volume (MySQL data)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 # NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=soulani (Deferred to Phase 7)
-NEXT_PUBLIC_WHATSAPP_NUMBER=6281122334455
+NEXT_PUBLIC_WHATSAPP_NUMBER=6281210663530
+# NOTE: Phase 6 will migrate this number to a CMS-managed admin setting
+# (HomepageContent table) so it can be updated from the admin dashboard
+# without requiring env var changes or redeployment.
 ```
 
 **Backend (apps/api/.env)**
@@ -718,6 +721,29 @@ soulani-auto-garage/
 
 All features must be developed, integrated, and fully functional on the local environment before any cloud deployment occurs.
 
+Project Status
+
+Phase	Status
+Phase 1: Foundation	✅ Completed
+Phase 2: Inventory Management	✅ Completed
+Phase 3: Public Website & Sales Flow ⚪ In Progress
+Phase 4: Rental Flow	⚪ Planned
+Phase 5: CRM & Operations	⚪ Planned
+Phase 6: Analytics & CMS	⚪ Planned
+Phase 7: Production Launch	⚪ Planned
+
+## Definition of Done
+
+A feature or phase is considered complete only when:
+
+* All planned deliverables have been implemented
+* API functionality has been tested
+* UI functionality has been tested (if applicable)
+* Validation and error handling have been implemented
+* Database reads/writes have been verified
+* Documentation has been updated
+* No known critical defects remain
+
 ### Phase 1: Foundation
 **Goal:** Establish local infrastructure and authentication backbone.
 
@@ -727,6 +753,15 @@ All features must be developed, integrated, and fully functional on the local en
 | Dependencies | Node.js, pnpm, Local MySQL |
 | Complexity | Medium |
 | Status | Completed |
+
+**Exit Criteria**
+
+* Turborepo monorepo is operational
+* Prisma migrations run successfully
+* Local MySQL connection is stable
+* JWT authentication is functional
+* Users/Staff API is functional
+* Next.js and NestJS applications run concurrently in local development
 
 ---
 
@@ -740,6 +775,15 @@ All features must be developed, integrated, and fully functional on the local en
 | Complexity | Medium |
 | Estimated Duration | 1–2 weeks |
 
+**Exit Criteria**
+
+* Vehicle CRUD functionality is operational
+* Vehicle image upload flow is functional
+* Inspection reports can be created, updated, and retrieved
+* Sales listing pricing configuration works correctly
+* Rental listing configuration works correctly
+* Inventory management workflow is usable end-to-end
+
 ---
 
 ### Phase 3: Public Website & Sales Flow
@@ -747,10 +791,34 @@ All features must be developed, integrated, and fully functional on the local en
 
 | Item | Detail |
 |---|---|
-| Deliverables | Homepage (Local SSG) · Sales Listing + Vehicle Detail pages (SEO metadata) · Lead Inquiry Form (with Make Offer conditional field) · Lead creation API + WhatsApp redirect logic |
+| Deliverables | Homepage (SSG + ISR, static-seeded content) · Sales Listing page (client-side filters, URL sync) · Vehicle Detail page (SSG + ISR per slug, SEO metadata + JSON-LD) · About Us + Contact pages (static dummy content, CMS-ready) · Lead Inquiry Form (Make Offer conditional field, Zod validation) · `POST /leads` API with WhatsApp redirect · `GET /vehicles/by-slug/:slug` public endpoint · Vehicle analytics view tracking (`POST /analytics/vehicles/:id/track-view`) · Rate limiting via `@nestjs/throttler` (5 req/IP/hour on leads) · Prisma seed script for Testimonials + HomepageContent |
 | Dependencies | Phase 2 complete (inventory must exist) |
 | Complexity | Medium-High |
 | Estimated Duration | 2 weeks |
+
+
+**Exit Criteria**
+
+* Homepage renders correctly
+* Sales listing page functions with filtering and URL synchronization
+* Vehicle detail page functions via slug routing
+* Lead inquiry flow works end-to-end
+* WhatsApp redirect flow works correctly
+* Vehicle analytics view tracking is operational
+* SEO metadata and structured data are generated correctly
+* Rate limiting functions as specified
+
+**Phase 3 Architecture Decisions (Approved):**
+
+| Decision | Choice |
+|---|---|
+| Slug routing | `GET /vehicles/by-slug/:slug` (separate from admin's numeric `:id` route) |
+| Image URL transform | API response includes computed `imageUrl` field (prepends server base URL to local paths) |
+| WhatsApp number | `6281210663530` (temporary placeholder; migrated to CMS-managed setting in Phase 6) |
+| Homepage content | Seeded with static defaults via Prisma seed; `HomepageContent` table kept for Phase 6 CMS |
+| Testimonial avatars | Initials-based avatars (no photo upload until Phase 6) |
+| About / Contact content | Static dummy content hardcoded for Phase 3; migrated to CMS in Phase 6 |
+| ISR in local dev | `cache: 'no-store'` in dev; `revalidate` values apply in production builds only |
 
 ---
 
@@ -764,6 +832,17 @@ All features must be developed, integrated, and fully functional on the local en
 | Complexity | High |
 | Estimated Duration | 2–3 weeks |
 
+
+**Exit Criteria**
+
+* Rental listing page is operational
+* Availability checking functions correctly
+* Blackout dates are enforced
+* Booking flow is operational
+* Guest checkout works correctly
+* Long-term quote workflow functions correctly
+* Admin booking management is usable
+
 ---
 
 ### Phase 5: CRM & Operations
@@ -776,6 +855,15 @@ All features must be developed, integrated, and fully functional on the local en
 | Complexity | Medium-High |
 | Estimated Duration | 2 weeks |
 
+**Exit Criteria**
+
+* CRM board is operational
+* Leads can be assigned to staff
+* Lead statuses can be managed
+* Lead followups function correctly
+* Long-term rental quote management is operational
+* Audit logs are generated and viewable
+
 ---
 
 ### Phase 6: Analytics & CMS
@@ -783,10 +871,27 @@ All features must be developed, integrated, and fully functional on the local en
 
 | Item | Detail |
 |---|---|
-| Deliverables | Owner Analytics Dashboard (Revenue, Conversion Rate, Top Vehicles) · CMS API & Admin UI for Testimonials, FAQ, and Homepage features |
+| Deliverables | Owner Analytics Dashboard (Revenue, Conversion Rate, Top Vehicles) · CMS API & Admin UI for Homepage content (Hero, Promos, Testimonials, About Us, Contact Us) · Admin-managed WhatsApp number (migrating from env var to `HomepageContent` table key `whatsapp_number`) · Testimonial photo upload support · FAQ management |
 | Dependencies | Phase 5 complete |
 | Complexity | Medium |
 | Estimated Duration | 1-2 weeks |
+
+
+**Exit Criteria**
+
+* Analytics dashboard is operational
+* Homepage content can be managed through CMS
+* About Us content can be managed through CMS
+* Contact page content can be managed through CMS
+* WhatsApp number can be managed through CMS
+* Testimonial photo management is operational
+* FAQ management is operational
+
+**Phase 6 CMS Scope Notes:**
+- `HomepageContent` key `whatsapp_number` replaces `NEXT_PUBLIC_WHATSAPP_NUMBER` env var
+- `HomepageContent` keys `about_hero`, `about_story`, `contact_address`, `contact_hours` replace static content on About/Contact pages
+- Testimonial records gain optional `avatarUrl` field (Multer upload via admin dashboard)
+- All Phase 3 static-content pages should already be reading from the API; Phase 6 simply adds the admin UI to edit those values
 
 ---
 
@@ -800,11 +905,21 @@ All features must be developed, integrated, and fully functional on the local en
 | Complexity | Medium |
 | Estimated Duration | 1 week |
 
+**Exit Criteria**
+
+* Production deployment succeeds
+* CI/CD pipeline is operational
+* Cloud infrastructure is provisioned
+* SSL is configured correctly
+* Custom domain is operational
+* Mobile responsiveness QA is completed
+* Lighthouse scores meet target requirements
+
 ---
 
 > [!TIP]
 > **Future Phases (Post-Launch)**
-> - Phase 7: Indonesian Payment Gateway (Midtrans/Xendit) — QRIS, Virtual Accounts, E-Wallets
-> - Phase 8: Customer Portal — account creation, booking history, saved vehicles
-> - Phase 9: 360 degree Vehicle Viewer + IDR Financing Calculator
-> - Phase 10: Advanced Analytics, SMS/WhatsApp fleet maintenance alerts
+> - Phase 8: Indonesian Payment Gateway (Midtrans/Xendit) — QRIS, Virtual Accounts, E-Wallets
+> - Phase 9: Customer Portal — account creation, booking history, saved vehicles
+> - Phase 10: 360 degree Vehicle Viewer + IDR Financing Calculator
+> - Phase 11: Advanced Analytics, SMS/WhatsApp fleet maintenance alerts

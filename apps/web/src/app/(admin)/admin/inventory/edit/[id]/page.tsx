@@ -14,7 +14,7 @@ export default function EditVehiclePage() {
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     apiFetch(`/vehicles/${id}`).then((res: any) => {
-      setData(res.data);
+      setData(res);
       setLoading(false);
     }).catch((err) => {
       console.error(err);

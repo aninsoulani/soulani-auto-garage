@@ -1,7 +1,7 @@
 'use client';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function InspectionTab({ register, vehicleId }: { register: any, vehicleId: number | null }) {
+export default function InspectionTab({ register, vehicleId, errors }: { register: any, vehicleId: number | null, errors: any }) {
   if (!vehicleId) {
     return (
       <div className="text-gray-500 py-8 text-center italic bg-gray-50 border rounded-lg">
@@ -37,17 +37,19 @@ export default function InspectionTab({ register, vehicleId }: { register: any, 
           <input 
             type="date" 
             {...register('inspectionDate')} 
-            className="w-full border border-gray-300 px-3 py-2 rounded text-black bg-white focus:ring focus:ring-blue-200 focus:outline-none" 
+            className={`w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring ${errors.inspectionDate ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} 
           />
+          {errors.inspectionDate && <p className="text-red-500 text-sm mt-1">❌ {errors.inspectionDate.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Inspector Name *</label>
           <input 
             type="text" 
             {...register('inspectorName')} 
-            className="w-full border border-gray-300 px-3 py-2 rounded text-black bg-white focus:ring focus:ring-blue-200 focus:outline-none" 
-            placeholder="e.g. John Doe"
+            className={`w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring ${errors.inspectorName ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} 
+            placeholder="John Doe"
           />
+          {errors.inspectorName && <p className="text-red-500 text-sm mt-1">❌ {errors.inspectorName.message}</p>}
         </div>
       </div>
 

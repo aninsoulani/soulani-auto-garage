@@ -11,21 +11,24 @@ import ImageUploaderTab from './ImageUploaderTab';
 import PricingTab from './PricingTab';
 import InspectionTab from './InspectionTab';
 
-const vehicleSchema = z.object({
-  make: z.string().min(1, 'Make is required'),
-  model: z.string().min(1, 'Model is required'),
-  year: z.number().min(1900).max(new Date().getFullYear() + 1),
-  color: z.string().min(1, 'Color is required'),
-  type: z.enum(['SALE', 'RENTAL', 'BOTH']),
+const baseSchema = z.object({
+  make: z.string().min(1, 'Merk is required.'),
+  model: z.string().min(1, 'Vehicle model is required.'),
+  year: z.number().min(1900, 'Year must be between 1900 and the current year.').max(new Date().getFullYear() + 1, 'Year must be between 1900 and the current year.'),
+  color: z.string().min(1, 'Color is required.'),
+  listingType: z.enum(['SALE', 'RENTAL', 'BOTH']),
   status: z.enum(['AVAILABLE', 'SOLD', 'RENTED', 'MAINTENANCE']),
   vin: z.string().optional().nullable(),
-  plateNumber: z.string().min(1, 'Plate Number is required'),
+  plateNumber: z.string().min(1, 'Plate number is required.'),
   chassisNumber: z.string().optional().nullable(),
   engineNumber: z.string().optional().nullable(),
-  mileage: z.number().optional().nullable(),
+  mileage: z.number().min(1, 'Mileage must be greater than 0.'),
+  carType: z.enum(['SUV', 'MPV', 'HATCHBACK', 'SEDAN', 'COUPE', 'CONVERTIBLE', 'WAGON', 'PICKUP', 'VAN', 'CROSSOVER']),
   transmission: z.enum(['MANUAL', 'AUTOMATIC', 'CVT']).optional().nullable(),
   fuelType: z.enum(['GASOLINE', 'DIESEL', 'HYBRID', 'ELECTRIC']).optional().nullable(),
-  description: z.string().optional().nullable(),
+  isFeatured: z.boolean().optional(),
+  isNewArrival: z.boolean().optional(),
+  description: z.string().min(1, 'Description is required.'),
 
   salesPrice: z.number().optional().nullable(),
   salesPreviousOwners: z.number().optional().nullable(),
@@ -44,47 +47,65 @@ const vehicleSchema = z.object({
   inspectionInteriorStatus: z.string().optional().nullable(),
   inspectionExteriorStatus: z.string().optional().nullable(),
   inspectionGeneralNotes: z.string().optional().nullable(),
-}).superRefine((data, ctx) => {
-  if (data.inspectionDate && !data.inspectorName) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Inspector Name is required when Inspection Date is provided',
-      path: ['inspectorName'],
-    });
+});
+
+const getVehicleSchema = (isEditMode: boolean) => baseSchema.superRefine((data, ctx) => {
+  if (['SALE', 'BOTH'].includes(data.listingType)) {
+    if (!data.salesPrice || data.salesPrice <= 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Sales price is required for vehicles listed for sale.', path: ['salesPrice'] });
+    }
   }
-  if (!data.inspectionDate && data.inspectorName) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Inspection Date is required when Inspector Name is provided',
-      path: ['inspectionDate'],
-    });
+  if (['RENTAL', 'BOTH'].includes(data.listingType)) {
+    if (!data.rentalDailyRate || data.rentalDailyRate <= 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Rental price is required for rental vehicles.', path: ['rentalDailyRate'] });
+    }
+  }
+
+  if (isEditMode) {
+    if (!data.inspectionDate) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspection date is required.', path: ['inspectionDate'] });
+    }
+    if (!data.inspectorName) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspector name is required.', path: ['inspectorName'] });
+    }
+  } else {
+    if (data.inspectionDate && !data.inspectorName) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspector name is required.', path: ['inspectorName'] });
+    }
+    if (!data.inspectionDate && data.inspectorName) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspection date is required.', path: ['inspectionDate'] });
+    }
   }
 });
 
-type VehicleFormValues = z.infer<typeof vehicleSchema>;
+type VehicleFormValues = z.infer<typeof baseSchema>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function VehicleForm({ initialData, vehicleId }: { initialData?: any, vehicleId?: string }) {
   const [activeTab, setActiveTab] = useState('core');
+  const [imageError, setImageError] = useState(false);
   const { accessToken } = useAuthStore();
   const router = useRouter();
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<VehicleFormValues>({
-    resolver: zodResolver(vehicleSchema),
+    resolver: zodResolver(getVehicleSchema(!!vehicleId)),
     defaultValues: {
       make: initialData?.make || '',
       model: initialData?.model || '',
       year: initialData?.year || new Date().getFullYear(),
       color: initialData?.color || '',
-      type: initialData?.type || 'SALE',
+      listingType: initialData?.listingType || 'SALE',
       status: initialData?.status || 'AVAILABLE',
       vin: initialData?.vin || '',
       plateNumber: initialData?.plateNumber || '',
       chassisNumber: initialData?.chassisNumber || '',
       engineNumber: initialData?.engineNumber || '',
       mileage: initialData?.mileage || 0,
+      carType: initialData?.carType || 'SUV',
       transmission: initialData?.transmission || 'AUTOMATIC',
       fuelType: initialData?.fuelType || 'GASOLINE',
+      isFeatured: initialData?.isFeatured || false,
+      isNewArrival: initialData?.isNewArrival ?? true,
       description: initialData?.description || '',
 
       salesPrice: initialData?.salesListing?.price || 0,
@@ -107,10 +128,22 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
     }
   });
 
-  const currentType = watch('type');
+  const currentListingType = watch('listingType');
 
   const onSubmit = async (data: VehicleFormValues) => {
     try {
+      if (vehicleId) {
+        // Verify image count before allowing save
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const existingVehicle = await apiFetch(`/vehicles/${vehicleId}`) as any;
+        if (existingVehicle && (!existingVehicle.images || existingVehicle.images.length === 0)) {
+          setImageError(true);
+          setActiveTab('images');
+          return;
+        }
+      }
+      setImageError(false);
+
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const {
         salesPrice, salesPreviousOwners,
@@ -137,11 +170,11 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
           body: JSON.stringify(coreData),
           token: accessToken || undefined
         });
-        savedVehicleId = res.data.id;
+        savedVehicleId = res.id;
       }
 
       // Automatically save pricing config based on type
-      if (['SALE', 'BOTH'].includes(data.type)) {
+      if (['SALE', 'BOTH'].includes(data.listingType)) {
         await apiFetch(`/vehicles/${savedVehicleId}/sales-listing`, {
           method: 'PUT',
           body: JSON.stringify({ price: data.salesPrice || 0, previousOwners: data.salesPreviousOwners || 0 }),
@@ -149,7 +182,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         });
       }
 
-      if (['RENTAL', 'BOTH'].includes(data.type)) {
+      if (['RENTAL', 'BOTH'].includes(data.listingType)) {
         await apiFetch(`/vehicles/${savedVehicleId}/rental-listing`, {
           method: 'PUT',
           body: JSON.stringify({ dailyRate: data.rentalDailyRate || 0, depositAmount: data.rentalDepositAmount || 0, isLongTermEligible: data.rentalIsLongTermEligible || false }),
@@ -207,17 +240,24 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
     }
   };
 
+  const coreErrorKeys = ['make', 'model', 'year', 'color', 'listingType', 'status', 'plateNumber', 'vin', 'chassisNumber', 'engineNumber', 'mileage', 'transmission', 'fuelType', 'description'];
+  const pricingErrorKeys = ['salesPrice', 'rentalDailyRate', 'rentalDepositAmount'];
+  const inspectionErrorKeys = ['inspectionDate', 'inspectorName', 'inspectionEngineStatus', 'inspectionTransmissionStatus', 'inspectionSuspensionStatus', 'inspectionElectricalStatus', 'inspectionAcStatus', 'inspectionTiresStatus', 'inspectionInteriorStatus', 'inspectionExteriorStatus', 'inspectionGeneralNotes'];
+
+  const hasCoreErrors = coreErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
+  const hasPricingErrors = pricingErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
+  const hasInspectionErrors = inspectionErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onError = (errors: any) => {
-    console.log('Validation errors:', errors);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errorMessages = Object.values(errors).map((e: any) => e?.message).filter(Boolean);
-    Swal.fire({
-      title: 'Validation Error',
-      text: errorMessages.length > 0 ? errorMessages.join(', ') : 'Please check all tabs for invalid fields.',
-      icon: 'error',
-      confirmButtonColor: '#2563eb'
-    });
+  const onError = (formErrors: any) => {
+    // Auto-navigate to the first tab with an error so React Hook Form can focus the first invalid field
+    if (coreErrorKeys.some(k => formErrors[k])) {
+      setActiveTab('core');
+    } else if (pricingErrorKeys.some(k => formErrors[k])) {
+      setActiveTab('pricing');
+    } else if (inspectionErrorKeys.some(k => formErrors[k])) {
+      setActiveTab('inspections');
+    }
   };
 
   return (
@@ -226,30 +266,30 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         <button
           type="button"
           onClick={() => setActiveTab('core')}
-          className={`px-6 py-4 font-medium transition ${activeTab === 'core' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'core' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Core Details
+          Core Details {hasCoreErrors && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('images')}
-          className={`px-6 py-4 font-medium transition ${activeTab === 'images' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'images' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Images
+          Images {imageError && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('inspections')}
-          className={`px-6 py-4 font-medium transition ${activeTab === 'inspections' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'inspections' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Inspections
+          Inspections {hasInspectionErrors && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('pricing')}
-          className={`px-6 py-4 font-medium transition ${activeTab === 'pricing' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'pricing' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Pricing Settings
+          Pricing Settings {hasPricingErrors && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
         </button>
       </div>
 
@@ -257,28 +297,28 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         <div className={activeTab === 'core' ? 'block' : 'hidden'}>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Make *</label>
-              <input {...register('make')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200" />
-              {errors.make && <p className="text-red-500 text-xs mt-1">{errors.make.message}</p>}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Merk *</label>
+              <input placeholder="Toyota" {...register('make')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.make ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
+              {errors.make && <p className="text-red-500 text-sm mt-1">❌ {errors.make.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Model *</label>
-              <input {...register('model')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200" />
-              {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model.message}</p>}
+              <input placeholder="Fortuner GR Sport" {...register('model')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.model ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
+              {errors.model && <p className="text-red-500 text-sm mt-1">❌ {errors.model.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Year *</label>
-              <input type="number" {...register('year', { valueAsNumber: true })} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200" />
-              {errors.year && <p className="text-red-500 text-xs mt-1">{errors.year.message}</p>}
+              <input placeholder="2023" type="number" {...register('year', { valueAsNumber: true })} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.year ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
+              {errors.year && <p className="text-red-500 text-sm mt-1">❌ {errors.year.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Color *</label>
-              <input {...register('color')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200" />
-              {errors.color && <p className="text-red-500 text-xs mt-1">{errors.color.message}</p>}
+              <input placeholder="White" {...register('color')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.color ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
+              {errors.color && <p className="text-red-500 text-sm mt-1">❌ {errors.color.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-              <select {...register('type')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Listing Type *</label>
+              <select {...register('listingType')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200">
                 <option value="SALE">Sale</option>
                 <option value="RENTAL">Rental</option>
                 <option value="BOTH">Both</option>
@@ -296,14 +336,35 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Plate Number *</label>
-              <input {...register('plateNumber')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200" />
-              {errors.plateNumber && <p className="text-red-500 text-xs mt-1">{errors.plateNumber.message}</p>}
+              <input placeholder="B 1234 XYZ" {...register('plateNumber')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.plateNumber ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
+              {errors.plateNumber && <p className="text-red-500 text-sm mt-1">❌ {errors.plateNumber.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">VIN</label>
-              <input {...register('vin')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200" />
+              <input placeholder="MHF123..." {...register('vin')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring border-gray-300 focus:ring-blue-200`} />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mileage (km) *</label>
+              <input placeholder="45000" type="number" {...register('mileage', { valueAsNumber: true })} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.mileage ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
+              {errors.mileage && <p className="text-red-500 text-sm mt-1">❌ {errors.mileage.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Car Type *</label>
+              <select {...register('carType')} className={`w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring ${errors.carType ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`}>
+                <option value="SUV">SUV</option>
+                <option value="MPV">MPV</option>
+                <option value="HATCHBACK">Hatchback</option>
+                <option value="SEDAN">Sedan</option>
+                <option value="COUPE">Coupe</option>
+                <option value="CONVERTIBLE">Convertible</option>
+                <option value="WAGON">Wagon</option>
+                <option value="PICKUP">Pickup</option>
+                <option value="VAN">Van</option>
+                <option value="CROSSOVER">Crossover</option>
+              </select>
+              {errors.carType && <p className="text-red-500 text-sm mt-1">❌ {errors.carType.message}</p>}
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Transmission</label>
               <select {...register('transmission')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200">
@@ -323,13 +384,41 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
             </div>
           </div>
 
+          <div className="mt-6 grid grid-cols-2 gap-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" {...register('isFeatured')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                <div>
+                  <span className="block text-sm font-semibold text-gray-900">Pilihan Terbaik (Featured)</span>
+                  <span className="block text-xs text-gray-500">Show this vehicle prominently on the homepage</span>
+                </div>
+              </label>
+            </div>
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" {...register('isNewArrival')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                <div>
+                  <span className="block text-sm font-semibold text-gray-900">Baru Masuk (New Arrival)</span>
+                  <span className="block text-xs text-gray-500">Tag this vehicle as newly arrived inventory</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea {...register('description')} rows={5} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200"></textarea>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <textarea placeholder="Well maintained vehicle with complete service history" {...register('description')} rows={5} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.description ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`}></textarea>
+            {errors.description && <p className="text-red-500 text-sm mt-1">❌ {errors.description.message}</p>}
           </div>
         </div>
 
         <div className={activeTab === 'images' ? 'block' : 'hidden'}>
+          {imageError && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-6">
+              <p className="font-semibold">❌ Validation Error</p>
+              <p className="text-sm mt-1">At least one vehicle image is required.</p>
+            </div>
+          )}
           {vehicleId ? (
             <ImageUploaderTab vehicleId={vehicleId} initialImages={initialData?.images || []} />
           ) : (
@@ -338,11 +427,11 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         </div>
 
         <div className={activeTab === 'inspections' ? 'block' : 'hidden'}>
-          <InspectionTab register={register} vehicleId={vehicleId ? parseInt(vehicleId) : null} />
+          <InspectionTab register={register} vehicleId={vehicleId ? parseInt(vehicleId) : null} errors={errors} />
         </div>
 
         <div className={activeTab === 'pricing' ? 'block' : 'hidden'}>
-          <PricingTab vehicleType={currentType} register={register} />
+          <PricingTab listingType={currentListingType} register={register} errors={errors} />
         </div>
 
         <div className="flex justify-end gap-3 border-t mt-8 pt-6 border-gray-200">

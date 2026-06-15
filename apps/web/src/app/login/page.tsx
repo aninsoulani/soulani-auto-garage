@@ -18,11 +18,11 @@ export default function LoginPage() {
     setError('');
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = await apiFetch<{ data: { accessToken: string; user: any } }>(
+      const res = await apiFetch<{ accessToken: string; user: any }>(
         '/auth/login',
         { method: 'POST', body: JSON.stringify({ email, password }) }
       );
-      setAuth(res.data.accessToken, res.data.user);
+      setAuth(res.accessToken, res.user);
       router.push('/admin/dashboard');
     } catch {
       setError('Invalid email or password. Please try again.');

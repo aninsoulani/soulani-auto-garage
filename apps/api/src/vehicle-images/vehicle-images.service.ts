@@ -131,4 +131,29 @@ export class VehicleImagesService {
 
     return result;
   }
+
+  async reorderImages(vehicleId: number, imageIds: number[], userId: number) {
+    return this.prisma.$transaction(async (tx) => {
+      const updates = imageIds.map((id, index) => 
+        tx.vehicleImage.updateMany({
+          where: { id, vehicleId },
+          data: { sortOrder: index }
+        })
+      );
+      
+      await Promise.all(updates);
+      
+      await tx.auditLog.create({
+        data: {
+          userId,
+          action: AuditAction.UPDATE,
+          moduleName: 'VehicleImages',
+          recordId: vehicleId,
+          newValue: { message: `Reordered ${imageIds.length} images`, imageIds },
+        },
+      });
+
+      return { success: true, message: 'Images reordered successfully' };
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Param, UseInterceptors, UploadedFiles, Request, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Param, UseInterceptors, UploadedFiles, Request, Patch, Delete, Body, BadRequestException } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -29,8 +29,8 @@ export class VehicleImagesController {
       }
     }),
     fileFilter: (req, file, cb) => {
-      if (!file.originalname.match(/\.(jpg|jpeg|png)$/i)) {
-        return cb(new Error('Only image files are allowed!'), false);
+      if (!file.originalname.match(/\.(jpg|jpeg|png|webp|jfif)$/i)) {
+        return cb(new BadRequestException('Only image files (JPG, PNG, WebP, JFIF) are allowed!'), false);
       }
       cb(null, true);
     },
@@ -45,6 +45,15 @@ export class VehicleImagesController {
       files.map(file => this.vehicleImagesService.uploadImage(+vehicleId, file, req.user.id))
     );
     return uploadedImages;
+  }
+
+  @Patch('reorder')
+  reorderImages(
+    @Param('vehicleId') vehicleId: string,
+    @Body() body: { imageIds: number[] },
+    @Request() req
+  ) {
+    return this.vehicleImagesService.reorderImages(+vehicleId, body.imageIds, req.user.id);
   }
 
   @Patch(':imageId/primary')

@@ -11,9 +11,11 @@ interface Vehicle {
   make: string;
   model: string;
   year: number;
-  type: string;
+  listingType: string;
   status: string;
   plateNumber: string;
+  isFeatured?: boolean;
+  isNewArrival?: boolean;
 }
 
 export default function InventoryPage() {
@@ -23,25 +25,67 @@ export default function InventoryPage() {
   const [total, setTotal] = useState(0);
   const { accessToken } = useAuthStore();
 
+  const [search, setSearch] = useState('');
+  const [listingType, setListingType] = useState('');
+  const [carType, setCarType] = useState('');
+  const [status, setStatus] = useState('');
+  const [sort, setSort] = useState('newest');
+
   useEffect(() => {
     fetchVehicles(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, listingType, carType, status, sort]);
 
   const fetchVehicles = async (currentPage: number) => {
     try {
       setLoading(true);
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: '10',
+        sort
+      });
+      if (search) params.set('search', search);
+      if (listingType) params.set('listingType', listingType);
+      if (carType) params.set('carType', carType);
+      if (status) params.set('status', status);
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = await apiFetch<any>(`/vehicles?page=${currentPage}&limit=10`, {
+      const res = await apiFetch<any>(`/vehicles?${params.toString()}`, {
         token: accessToken || undefined
       });
-      setVehicles(res.data.data);
-      setTotal(res.data.meta.total);
+      setVehicles(res.data);
+      setTotal(res.meta.total);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    fetchVehicles(1);
+  };
+
+  const handleClear = () => {
+    setSearch('');
+    setListingType('');
+    setCarType('');
+    setStatus('');
+    setSort('newest');
+    setPage(1);
+
+    setLoading(true);
+    apiFetch<any>(`/vehicles?page=1&limit=10&sort=newest`, {
+      token: accessToken || undefined
+    })
+      .then((res) => {
+        setVehicles(res.data);
+        setTotal(res.meta.total);
+      })
+      .catch((error) => console.error(error))
+      .finally(() => setLoading(false));
   };
 
   const deleteVehicle = async (id: number) => {
@@ -83,6 +127,79 @@ export default function InventoryPage() {
         </Link>
       </div>
 
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 items-end">
+        <form onSubmit={handleSearch} className="flex-1 w-full">
+          <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Search make, model, or plate..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+            />
+            <button type="submit" className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition">Search</button>
+          </div>
+        </form>
+
+        <div className="w-full md:w-40">
+          <label className="block text-xs font-medium text-gray-500 mb-1">Listing Type</label>
+          <select value={listingType} onChange={(e) => { setListingType(e.target.value); setPage(1); }} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
+            <option value="">All</option>
+            <option value="SALE">Sale</option>
+            <option value="RENTAL">Rental</option>
+            <option value="BOTH">Both</option>
+          </select>
+        </div>
+
+        <div className="w-full md:w-40">
+          <label className="block text-xs font-medium text-gray-500 mb-1">Car Type</label>
+          <select value={carType} onChange={(e) => { setCarType(e.target.value); setPage(1); }} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
+            <option value="">All</option>
+            <option value="SUV">SUV</option>
+            <option value="MPV">MPV</option>
+            <option value="HATCHBACK">Hatchback</option>
+            <option value="SEDAN">Sedan</option>
+            <option value="COUPE">Coupe</option>
+            <option value="CONVERTIBLE">Convertible</option>
+            <option value="WAGON">Wagon</option>
+            <option value="PICKUP">Pickup</option>
+            <option value="VAN">Van</option>
+            <option value="CROSSOVER">Crossover</option>
+          </select>
+        </div>
+
+        <div className="w-full md:w-40">
+          <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+          <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
+            <option value="">All</option>
+            <option value="AVAILABLE">Available</option>
+            <option value="SOLD">Sold</option>
+            <option value="RENTED">Rented</option>
+            <option value="MAINTENANCE">Maintenance</option>
+          </select>
+        </div>
+
+        <div className="w-full md:w-40 flex flex-col justify-end">
+          <label className="block text-xs font-medium text-gray-500 mb-1">Sort By</label>
+          <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="price:desc">Highest Price</option>
+            <option value="price:asc">Lowest Price</option>
+          </select>
+        </div>
+        
+        <div className="flex-none">
+          <button 
+            onClick={handleClear} 
+            className="w-full md:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium transition"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -108,11 +225,15 @@ export default function InventoryPage() {
                 <tr key={v.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900">{v.year} {v.make} {v.model}</div>
+                    <div className="flex gap-1 mt-1">
+                      {v.isFeatured && <span className="bg-yellow-100 text-yellow-800 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Featured</span>}
+                      {v.isNewArrival && <span className="bg-purple-100 text-purple-800 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">New</span>}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-gray-600">{v.plateNumber || '-'}</td>
                   <td className="px-6 py-4">
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                      {v.type}
+                      {v.listingType}
                     </span>
                   </td>
                   <td className="px-6 py-4">

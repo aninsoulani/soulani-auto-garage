@@ -1,0 +1,104 @@
+import Link from 'next/link';
+import Image from 'next/image';
+import type { Vehicle } from '@/types/api.types';
+import { formatIDR, formatMileage, getTransmissionLabel, getFuelLabel } from '@/lib/utils';
+import { getPrimaryImageUrl } from '@/lib/images';
+import VehicleBadge from './VehicleBadge';
+import { Gauge, Cog } from 'lucide-react';
+
+interface VehicleCardProps {
+  vehicle: Vehicle;
+  /** Controls which price to display and which CTA link to use */
+  variant?: 'sale' | 'rental';
+}
+
+export default function VehicleCard({ vehicle, variant = 'sale' }: VehicleCardProps) {
+  const primaryImage = getPrimaryImageUrl(vehicle.images);
+  const href = variant === 'sale' ? `/sales/${vehicle.slug}` : `/rental/${vehicle.slug}`;
+
+  const price =
+    variant === 'sale'
+      ? vehicle.salesListing?.price
+      : vehicle.rentalListing?.dailyRate;
+
+  const priceLabel =
+    variant === 'sale' ? formatIDR(price ?? 0) : `${formatIDR(price ?? 0)} / hari`;
+
+  return (
+    <Link
+      href={href}
+      className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col"
+    >
+      {/* Image */}
+      <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+        <Image
+          src={primaryImage}
+          alt={`${vehicle.make} ${vehicle.model} ${vehicle.year}`}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
+        {/* Badges overlay */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+          {vehicle.isFeatured && <VehicleBadge type="featured" />}
+          {vehicle.isNewArrival && <VehicleBadge type="new-arrival" />}
+          {vehicle.rentalListing?.isLongTermEligible && variant === 'rental' && (
+            <VehicleBadge type="long-term" />
+          )}
+        </div>
+        {/* Status badge (sold/rented) */}
+        {vehicle.status !== 'AVAILABLE' && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <span className="bg-white text-slate-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+              {vehicle.status === 'SOLD' ? 'Terjual' : vehicle.status === 'RENTED' ? 'Disewa' : 'Servis'}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-4 flex flex-col flex-1">
+        {/* Title */}
+        <h3 className="font-bold text-slate-900 text-base leading-snug line-clamp-1">
+          {vehicle.make} {vehicle.model}
+        </h3>
+        {/* Meta row */}
+        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 flex-wrap">
+          <span>{vehicle.year}</span>
+          {vehicle.mileage != null && (
+            <>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1">
+                <Gauge size={11} />
+                {formatMileage(vehicle.mileage)}
+              </span>
+            </>
+          )}
+          {vehicle.transmission && (
+            <>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1">
+                <Cog size={11} />
+                {getTransmissionLabel(vehicle.transmission)}
+              </span>
+            </>
+          )}
+          {vehicle.fuelType && (
+            <>
+              <span className="text-slate-300">•</span>
+              <span>{getFuelLabel(vehicle.fuelType)}</span>
+            </>
+          )}
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Price */}
+        <div className="mt-3 pt-3 border-t border-slate-50">
+          <p className="text-blue-600 font-bold text-lg leading-none">{priceLabel}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}

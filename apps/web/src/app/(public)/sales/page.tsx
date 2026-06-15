@@ -1,0 +1,279 @@
+'use client';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { SlidersHorizontal, ArrowUpDown, X } from 'lucide-react';
+import { getVehicles } from '@/lib/api';
+import VehicleGrid from '@/components/vehicles/VehicleGrid';
+import VehicleFilters, { FilterState } from '@/components/vehicles/VehicleFilters';
+import EmptyState from '@/components/shared/EmptyState';
+import Breadcrumb from '@/components/shared/Breadcrumb';
+import type { Vehicle, TransmissionType, FuelType } from '@/types/api.types';
+
+// ─── Filter State ─────────────────────────────────────────────────────────────
+
+function paramsToFilters(params: URLSearchParams): FilterState {
+  return {
+    search: params.get('search') || '',
+    carType: params.get('carType') || '',
+    transmission: (params.get('transmission') as TransmissionType) || '',
+    fuelType: (params.get('fuelType') as FuelType) || '',
+    minPrice: params.get('minPrice') || '',
+    maxPrice: params.get('maxPrice') || '',
+    sort: params.get('sort') || 'newest',
+    isFeatured: params.get('isFeatured') === 'true',
+    isNewArrival: params.get('isNewArrival') === 'true',
+  };
+}
+
+function filtersToParams(f: FilterState): URLSearchParams {
+  const p = new URLSearchParams();
+  if (f.search) p.set('search', f.search);
+  if (f.carType) p.set('carType', f.carType);
+  if (f.transmission) p.set('transmission', f.transmission);
+  if (f.fuelType) p.set('fuelType', f.fuelType);
+  if (f.minPrice) p.set('minPrice', f.minPrice);
+  if (f.maxPrice) p.set('maxPrice', f.maxPrice);
+  if (f.sort && f.sort !== 'newest') p.set('sort', f.sort);
+  if (f.isFeatured) p.set('isFeatured', 'true');
+  if (f.isNewArrival) p.set('isNewArrival', 'true');
+  return p;
+}
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+const PAGE_SIZE = 12;
+
+export default function SalesPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [filters, setFilters] = useState<FilterState>(() => paramsToFilters(searchParams));
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const fetchVehicles = useCallback(async (f: FilterState, p: number) => {
+    setLoading(true);
+    try {
+      const result = await getVehicles({
+        listingType: 'SALE',
+        status: 'AVAILABLE',
+        search: f.search || undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        carType: (f.carType as any) || undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        transmission: (f.transmission as any) || undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        fuelType: (f.fuelType as any) || undefined,
+        minPrice: f.minPrice ? Number(f.minPrice) : undefined,
+        maxPrice: f.maxPrice ? Number(f.maxPrice) : undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sort: (f.sort as any) || 'newest',
+        isFeatured: f.isFeatured || undefined,
+        isNewArrival: f.isNewArrival || undefined,
+        page: p,
+        limit: PAGE_SIZE,
+      });
+      setVehicles(result.data);
+      setTotal(result.meta.total);
+      setTotalPages(result.meta.totalPages);
+    } catch {
+      setVehicles([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchVehicles(filters, page);
+    // Sync URL
+    const params = filtersToParams(filters);
+    if (page > 1) params.set('page', String(page));
+    router.replace(`/sales?${params.toString()}`, { scroll: false });
+  }, [filters, page, fetchVehicles, router]);
+
+  const updateFilters = (update: Partial<FilterState>) => {
+    setFilters((prev) => ({ ...prev, ...update }));
+    setPage(1);
+  };
+
+  const activeFilterCount = [
+    filters.search,
+    filters.transmission,
+    filters.fuelType,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.isFeatured,
+    filters.isNewArrival,
+  ].filter(Boolean).length;
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <Breadcrumb items={[{ label: 'Mobil Dijual' }]} />
+
+      <div className="mt-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Mobil Dijual</h1>
+          {!loading && (
+            <p className="text-sm text-slate-500 mt-0.5">
+              {total.toLocaleString('id-ID')} kendaraan tersedia
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          {/* Mobile filter button */}
+          <button
+            onClick={() => setFiltersOpen(true)}
+            className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <SlidersHorizontal size={16} />
+            Filter {activeFilterCount > 0 && <span className="bg-blue-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{activeFilterCount}</span>}
+          </button>
+
+          {/* Sort */}
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm">
+            <ArrowUpDown size={14} className="text-slate-400" />
+            <select
+              value={filters.sort}
+              onChange={(e) => updateFilters({ sort: e.target.value })}
+              className="bg-transparent text-slate-900 font-medium outline-none cursor-pointer"
+            >
+              <option value="newest">Terbaru</option>
+              <option value="price:asc">Harga Terendah</option>
+              <option value="price:desc">Harga Tertinggi</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Search bar */}
+      <div className="mb-5">
+        <div className="relative max-w-md">
+          <input
+            type="search"
+            placeholder="Cari merek atau model..."
+            value={filters.search}
+            onChange={(e) => updateFilters({ search: e.target.value })}
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-900 bg-white placeholder-slate-400"
+          />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+        </div>
+      </div>
+
+      {/* Active filter chips */}
+      {activeFilterCount > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {filters.transmission && (
+            <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              {filters.transmission === 'AUTOMATIC' ? 'Otomatis' : filters.transmission}
+              <button onClick={() => updateFilters({ transmission: '' })}><X size={12} /></button>
+            </span>
+          )}
+          {filters.fuelType && (
+            <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              {filters.fuelType === 'GASOLINE' ? 'Bensin' : filters.fuelType}
+              <button onClick={() => updateFilters({ fuelType: '' })}><X size={12} /></button>
+            </span>
+          )}
+          {filters.isFeatured && (
+            <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Pilihan Terbaik <button onClick={() => updateFilters({ isFeatured: false })}><X size={12} /></button>
+            </span>
+          )}
+          <button
+            onClick={() => updateFilters({ search: '', transmission: '', fuelType: '', minPrice: '', maxPrice: '', isFeatured: false, isNewArrival: false })}
+            className="text-xs text-slate-500 hover:text-slate-800 underline"
+          >
+            Hapus semua filter
+          </button>
+        </div>
+      )}
+
+      <div className="flex gap-8">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block w-56 shrink-0">
+          <VehicleFilters filters={filters} onChange={updateFilters} />
+        </div>
+
+        {/* Grid */}
+        <div className="flex-1 min-w-0">
+          {!loading && vehicles.length === 0 ? (
+            <EmptyState
+              title="Tidak ada mobil ditemukan"
+              description="Coba ubah filter atau kata kunci pencarian Anda."
+              action={
+                <button
+                  onClick={() => updateFilters({ search: '', transmission: '', fuelType: '', minPrice: '', maxPrice: '', isFeatured: false, isNewArrival: false })}
+                  className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  Reset Filter
+                </button>
+              }
+            />
+          ) : (
+            <VehicleGrid vehicles={vehicles} loading={loading} variant="sale" skeletonCount={PAGE_SIZE} />
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white disabled:opacity-40 hover:bg-slate-50 transition-colors"
+              >
+                ← Sebelumnya
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    className={`w-9 h-9 text-sm font-medium rounded-xl border transition-colors ${
+                      page === pageNum ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 bg-white hover:bg-slate-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white disabled:opacity-40 hover:bg-slate-50 transition-colors"
+              >
+                Berikutnya →
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Filter Sheet */}
+      {filtersOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setFiltersOpen(false)} />
+          <div className="relative bg-white rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">Filter</h2>
+              <button onClick={() => setFiltersOpen(false)} className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                <X size={16} />
+              </button>
+            </div>
+            <VehicleFilters filters={filters} onChange={(u) => { updateFilters(u); }} />
+            <button
+              onClick={() => setFiltersOpen(false)}
+              className="w-full mt-5 bg-blue-600 text-white font-bold py-3 rounded-xl text-sm"
+            >
+              Tampilkan {total} Hasil
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,6 +1,6 @@
-import { IsString, IsNotEmpty, IsInt, IsEnum, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, IsEnum, IsOptional, IsBoolean, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { VehicleType, VehicleStatus, TransmissionType, FuelType } from '@prisma/client';
+import { ListingType, VehicleStatus, TransmissionType, FuelType, CarType } from '@prisma/client';
 
 export class CreateVehicleDto {
   @IsString()
@@ -13,7 +13,13 @@ export class CreateVehicleDto {
 
   @IsInt()
   @Type(() => Number)
+  @Min(1900)
+  @Max(new Date().getFullYear() + 1)
   year: number;
+
+  @IsNotEmpty({ message: 'Please select a car type.' })
+  @IsEnum(CarType, { message: 'Please select a valid car type.' })
+  carType: CarType;
 
   @IsString()
   @IsNotEmpty()
@@ -35,8 +41,8 @@ export class CreateVehicleDto {
   @IsOptional()
   engineNumber?: string;
 
-  @IsEnum(VehicleType)
-  type: VehicleType;
+  @IsEnum(ListingType)
+  listingType: ListingType;
 
   @IsEnum(VehicleStatus)
   @IsOptional()
@@ -51,9 +57,10 @@ export class CreateVehicleDto {
   isNewArrival?: boolean;
 
   @IsInt()
-  @IsOptional()
+  @IsNotEmpty()
+  @Min(1)
   @Type(() => Number)
-  mileage?: number;
+  mileage: number;
 
   @IsEnum(TransmissionType)
   @IsOptional()
