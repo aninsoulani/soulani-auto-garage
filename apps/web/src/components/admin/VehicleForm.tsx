@@ -44,6 +44,21 @@ const vehicleSchema = z.object({
   inspectionInteriorStatus: z.string().optional().nullable(),
   inspectionExteriorStatus: z.string().optional().nullable(),
   inspectionGeneralNotes: z.string().optional().nullable(),
+}).superRefine((data, ctx) => {
+  if (data.inspectionDate && !data.inspectorName) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Inspector Name is required when Inspection Date is provided',
+      path: ['inspectorName'],
+    });
+  }
+  if (!data.inspectionDate && data.inspectorName) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Inspection Date is required when Inspector Name is provided',
+      path: ['inspectionDate'],
+    });
+  }
 });
 
 type VehicleFormValues = z.infer<typeof vehicleSchema>;
@@ -133,7 +148,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
           token: accessToken || undefined
         });
       }
-      
+
       if (['RENTAL', 'BOTH'].includes(data.type)) {
         await apiFetch(`/vehicles/${savedVehicleId}/rental-listing`, {
           method: 'PUT',
@@ -181,7 +196,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         router.push('/admin/inventory');
       });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       Swal.fire({
         title: 'Error!',
@@ -192,9 +207,11 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onError = (errors: any) => {
-    console.error('Validation errors:', errors);
-    const errorMessages = Object.values(errors).map((e: any) => e.message).filter(Boolean);
+    console.log('Validation errors:', errors);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const errorMessages = Object.values(errors).map((e: any) => e?.message).filter(Boolean);
     Swal.fire({
       title: 'Validation Error',
       text: errorMessages.length > 0 ? errorMessages.join(', ') : 'Please check all tabs for invalid fields.',
@@ -206,28 +223,28 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
   return (
     <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
       <div className="flex border-b border-gray-200 bg-gray-50">
-        <button 
+        <button
           type="button"
           onClick={() => setActiveTab('core')}
           className={`px-6 py-4 font-medium transition ${activeTab === 'core' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Core Details
         </button>
-        <button 
+        <button
           type="button"
           onClick={() => setActiveTab('images')}
           className={`px-6 py-4 font-medium transition ${activeTab === 'images' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Images
         </button>
-        <button 
+        <button
           type="button"
           onClick={() => setActiveTab('inspections')}
           className={`px-6 py-4 font-medium transition ${activeTab === 'inspections' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Inspections
         </button>
-        <button 
+        <button
           type="button"
           onClick={() => setActiveTab('pricing')}
           className={`px-6 py-4 font-medium transition ${activeTab === 'pricing' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
@@ -276,7 +293,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
                 <option value="MAINTENANCE">Maintenance</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Plate Number *</label>
               <input {...register('plateNumber')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200" />
@@ -329,8 +346,8 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         </div>
 
         <div className="flex justify-end gap-3 border-t mt-8 pt-6 border-gray-200">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => router.push('/admin/inventory')}
             className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-lg font-semibold shadow-sm transition"
           >

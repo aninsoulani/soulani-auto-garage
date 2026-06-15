@@ -14,7 +14,7 @@ export async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    if (res.status === 401 && typeof window !== 'undefined') {
+    if (res.status === 401 && typeof window !== 'undefined' && !endpoint.includes('/login')) {
       // Lazy load to prevent server-side initialization issues
       import('@/store/auth.store').then(({ useAuthStore }) => {
         useAuthStore.getState().clearAuth();

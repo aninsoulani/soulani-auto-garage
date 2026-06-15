@@ -33,7 +33,7 @@ export default function InspectionTab({ register, vehicleId }: { register: any, 
       
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Date *</label>
           <input 
             type="date" 
             {...register('inspectionDate')} 
@@ -41,7 +41,7 @@ export default function InspectionTab({ register, vehicleId }: { register: any, 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Inspector Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Inspector Name *</label>
           <input 
             type="text" 
             {...register('inspectorName')} 
