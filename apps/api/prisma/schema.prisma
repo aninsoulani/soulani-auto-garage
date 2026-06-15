@@ -180,8 +180,8 @@ model Vehicle {
 model VehicleImage {
   id                 Int      @id @default(autoincrement())
   vehicleId          Int      @map("vehicle_id")
-  cloudinaryUrl      String   @map("cloudinary_url")
-  cloudinaryPublicId String   @unique @map("cloudinary_public_id")
+  fileUrl            String   @map("file_url")
+  filePath           String   @unique @map("file_path")
   isPrimary          Boolean  @default(false) @map("is_primary")
   sortOrder          Int      @default(0) @map("sort_order")
 

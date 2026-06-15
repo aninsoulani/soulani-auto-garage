@@ -2,7 +2,7 @@
 # Soulani Auto Garage Platform
 
 **Version:** 1.0.0  
-**Stack:** Next.js 15 · NestJS · Prisma · MySQL · Cloudinary · Vercel · Railway  
+**Stack:** Next.js 15 · NestJS · Prisma · MySQL · Local File Storage (Multer) · Vercel · Railway  
 **Market:** Indonesia (Currency: IDR)  
 **Status:** Pre-Development — Ready for Engineering Team
 
@@ -30,12 +30,12 @@
 │  AuthModule · VehiclesModule · LeadsModule · BookingsModule         │
 │  InspectionModule · CmsModule · AnalyticsModule · UsersModule       │
 └────────────┬─────────────────────────────────┬──────────────────────┘
-             │ Prisma ORM (MySQL protocol)      │ Cloudinary SDK
+             │ Prisma ORM (MySQL protocol)      │ Local Disk FS
 ┌────────────▼─────────┐            ┌───────────▼─────────────────────┐
-│   DATABASE (Railway)  │            │   CLOUDINARY (External CDN)     │
-│   MySQL 8.x          │            │   soulani/vehicles/             │
-│   Prisma Migrations  │            │   soulani/licenses/             │
-└──────────────────────┘            │   soulani/testimonials/         │
+│   DATABASE (Railway)  │            │   LOCAL FILE STORAGE (Disk)     │
+│   MySQL 8.x          │            │   /uploads/vehicles/            │
+│   Prisma Migrations  │            │   /uploads/licenses/            │
+└──────────────────────┘            │   /uploads/testimonials/        │
                                     └─────────────────────────────────┘
 ```
 
@@ -46,7 +46,7 @@
 | Public page load (SSG) | CDN → Vercel → Next.js static page |
 | Vehicle list (RSC) | Browser → Next.js Server Component → NestJS API → MySQL |
 | Lead submission | Browser → NestJS API → MySQL → WhatsApp URL response |
-| Image upload | Browser → (Signature) → NestJS → Cloudinary (direct) → NestJS (save URL) |
+| Image upload | Browser → NestJS (saves locally to disk) → NestJS (saves relative URL) |
 | Admin dashboard | Browser → Next.js Client Component → NestJS API (JWT-protected) |
 
 ---
@@ -99,7 +99,7 @@ apps/web/
 ├── lib/
 │   ├── api.ts                        # Typed fetch client (base URL, error handling)
 │   ├── auth.ts                       # Token storage, refresh logic
-│   ├── cloudinary.ts                 # Upload helper using signed signature
+│   ├── uploads.ts                    # Upload helper for local files
 │   ├── whatsapp.ts                   # WhatsApp redirect URL builder
 │   └── utils.ts                      # IDR formatter, date helpers
 ├── hooks/
@@ -206,9 +206,9 @@ apps/api/
 │   │   └── filters/
 │   │       └── http-exception.filter.ts
 │   │
-│   ├── cloudinary/
-│   │   ├── cloudinary.module.ts
-│   │   └── cloudinary.service.ts
+│   ├── uploads/
+│   │   ├── uploads.module.ts
+│   │   └── uploads.service.ts
 │   │
 │   └── prisma/
 │       ├── prisma.module.ts
@@ -296,43 +296,39 @@ Client                    NestJS API                   MySQL
 
 ---
 
-## 5. Cloudinary Architecture
+## 5. Local File Storage Architecture
 
-### Direct Upload Flow
-
-```
-Admin Browser           NestJS API              Cloudinary
-    │                       │                       │
-    │─ POST /signature ─────►                       │
-    │                       │── generateSignature()  │
-    │◄── { signature,       │   (HMAC-SHA1 hash)    │
-    │     timestamp,        │                       │
-    │     api_key }─────────│                       │
-    │                       │                       │
-    │─── Upload directly ───────────────────────────►
-    │    (multipart/form-data + signature)           │
-    │◄── { secure_url, public_id }──────────────────┤
-    │                       │                       │
-    │─ POST /vehicles/:id/images ──►                │
-    │   { cloudinary_url, public_id }               │
-    │◄── 201 Created ───────│                       │
-```
-
-### Cloudinary Folder Conventions
+### File Upload Flow
 
 ```
-soulani/
+Admin Browser           NestJS API              Local Disk File System
+    │                       │                             │
+    │─ POST /uploads ───────►                             │
+    │  (Multipart Form)     │── Save to /uploads          │
+    │                       │   (generate unique filename)│
+    │◄── { filepath, ───────│                             │
+    │    url }              │                             │
+    │                       │                             │
+    │─ POST /vehicles/:id/images ──►                      │
+    │   { imageUrl }        │                             │
+    │◄── 201 Created ───────│                             │
+```
+
+### Local Directory Structure
+
+```
+apps/api/uploads/
 ├── vehicles/       # All vehicle listing images
 ├── licenses/       # Customer driver's license uploads
 └── testimonials/   # Author avatars
 ```
 
-### Image Optimization (Dynamic URL Transformations)
+### Image Size and Extension Rules
 
-| Use Case | Transformation |
+| Use Case | Validation Rules |
 |---|---|
-| Listing card thumbnail | f_auto,q_auto,w_600,h_450,c_fill |
-| Vehicle Detail hero | f_auto,q_auto,w_1280,q_85 |
+| Image Types | Only .png, .jpg, .jpeg allowed |
+| File Size Limit | Max 5MB per upload |
 | Admin thumbnail | f_auto,q_auto,w_200 |
 | OG / Social share | f_auto,q_auto,w_1200,h_630,c_fill |
 
@@ -544,16 +540,16 @@ CDN: Global Edge                     MySQL 8.x Database
 Preview Deployments                  Automatic Failover
 Environment Variables                Persistent Volume (MySQL data)
 
-                    Cloudinary (External CDN)
-                    Image storage and delivery
+                    Local File Storage (Disk)
+                    Serving files via NestJS API
 ```
 
 ### Environment Variables
 
 **Frontend (apps/web/.env.local)**
 ```env
-NEXT_PUBLIC_API_URL=https://api.soulanigarage.com/api/v1
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=soulani
+NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+# NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=soulani (Deferred to Phase 7)
 NEXT_PUBLIC_WHATSAPP_NUMBER=6281122334455
 ```
 
@@ -564,9 +560,11 @@ JWT_SECRET=super_secret_access_key_min_64_chars
 JWT_REFRESH_SECRET=super_secret_refresh_key_min_64_chars
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
-CLOUDINARY_CLOUD_NAME=soulani
-CLOUDINARY_API_KEY=123456789012345
-CLOUDINARY_API_SECRET=xxxx_cloudinary_secret_xxxx
+# Cloudinary credentials deferred to Phase 7 Production Launch
+# CLOUDINARY_CLOUD_NAME=soulani
+# CLOUDINARY_API_KEY=123456789012345
+# CLOUDINARY_API_SECRET=xxxx_cloudinary_secret_xxxx
+UPLOAD_DIR=./uploads
 FRONTEND_URL=https://soulanigarage.com
 PORT=3001
 ```
@@ -716,17 +714,19 @@ soulani-auto-garage/
 
 ---
 
-## 13. Development Roadmap
+## 13. Development Roadmap (Local-First Strategy)
+
+All features must be developed, integrated, and fully functional on the local environment before any cloud deployment occurs.
 
 ### Phase 1: Foundation
-**Goal:** Establish infrastructure and authentication backbone.
+**Goal:** Establish local infrastructure and authentication backbone.
 
 | Item | Detail |
 |---|---|
-| Deliverables | Monorepo setup · Prisma schema migration · MySQL on Railway · JWT Auth module · Users/Staff API · Health check endpoint |
-| Dependencies | Railway provisioned · MySQL instance up · Cloudinary account created |
+| Deliverables | Turborepo Monorepo setup · Prisma schema migration · Local MySQL database via Laragon · JWT Auth module · Users/Staff API · Next.js and NestJS scaffolded and running concurrently |
+| Dependencies | Node.js, pnpm, Local MySQL |
 | Complexity | Medium |
-| Estimated Duration | 1–2 weeks |
+| Status | Completed |
 
 ---
 
@@ -735,8 +735,8 @@ soulani-auto-garage/
 
 | Item | Detail |
 |---|---|
-| Deliverables | Vehicle CRUD API + Admin UI · Cloudinary direct upload flow · Inspection report form + API · Sales Listing pricing · Rental Listing config (rate, deposit, is_long_term_eligible) |
-| Dependencies | Phase 1 complete · Cloudinary API credentials |
+| Deliverables | Vehicle CRUD API + Admin UI · Local storage upload flow for Vehicle Images (via Multer) · Inspection report form + API · Sales Listing pricing configuration · Rental Listing config (rate, deposit, long term eligible) |
+| Dependencies | Phase 1 complete · Local file access permissions |
 | Complexity | Medium |
 | Estimated Duration | 1–2 weeks |
 
@@ -747,7 +747,7 @@ soulani-auto-garage/
 
 | Item | Detail |
 |---|---|
-| Deliverables | Homepage (SSG/ISR) · Sales Listing + Vehicle Detail pages (SEO) · Lead Inquiry Form (with Make Offer conditional field) · Lead creation API + WhatsApp redirect · Analytics view tracking |
+| Deliverables | Homepage (Local SSG) · Sales Listing + Vehicle Detail pages (SEO metadata) · Lead Inquiry Form (with Make Offer conditional field) · Lead creation API + WhatsApp redirect logic |
 | Dependencies | Phase 2 complete (inventory must exist) |
 | Complexity | Medium-High |
 | Estimated Duration | 2 weeks |
@@ -759,32 +759,44 @@ soulani-auto-garage/
 
 | Item | Detail |
 |---|---|
-| Deliverables | Rental Listing page with Long-Term Available badge · Availability Calendar API · Guest Checkout form · >7 Day custom quote via Lead flow · Admin booking status management · Blackout date management · Payment method config (bank transfer instructions) |
+| Deliverables | Rental Listing page with Long-Term Available badge · Availability & Blackout Dates API · Rental Booking flow & Guest Checkout form · >7 Day custom quote via Lead flow · Admin booking status management |
 | Dependencies | Phase 2 complete |
 | Complexity | High |
 | Estimated Duration | 2–3 weeks |
 
 ---
 
-### Phase 5: CRM & Analytics
-**Goal:** Full CRM for staff and analytics dashboard for owner.
+### Phase 5: CRM & Operations
+**Goal:** CRM for staff to track leads and assignments.
 
 | Item | Detail |
 |---|---|
-| Deliverables | Sales Leads CRM (Kanban, follow-ups, assign, bulk assign) · Long-Term Rental Quote board · Owner Analytics Dashboard (Revenue, Conversion Rate, Top Vehicles) · CMS Manager · Audit Log viewer |
+| Deliverables | Sales Leads CRM Board (Kanban, status tracking) · Lead Assignment to Staff · Lead Followups API & UI · Long-Term Rental Quote management · Audit logs |
 | Dependencies | Phase 3 + Phase 4 complete |
-| Complexity | High |
-| Estimated Duration | 2–3 weeks |
+| Complexity | Medium-High |
+| Estimated Duration | 2 weeks |
 
 ---
 
-### Phase 6: Production Launch
-**Goal:** Harden, optimize, and go live.
+### Phase 6: Analytics & CMS
+**Goal:** Analytics dashboard for the owner and content management.
 
 | Item | Detail |
 |---|---|
-| Deliverables | Rate limiting hardening · Full SEO audit (sitemaps, robots.txt, metadata) · Mobile responsiveness QA · Lighthouse scores >= 90 · CI/CD pipeline finalized · SSL + custom domain · DB backup verification · Staff onboarding docs |
-| Dependencies | All phases complete |
+| Deliverables | Owner Analytics Dashboard (Revenue, Conversion Rate, Top Vehicles) · CMS API & Admin UI for Testimonials, FAQ, and Homepage features |
+| Dependencies | Phase 5 complete |
+| Complexity | Medium |
+| Estimated Duration | 1-2 weeks |
+
+---
+
+### Phase 7: Production Launch
+**Goal:** Harden, optimize, and deploy to the cloud.
+
+| Item | Detail |
+|---|---|
+| Deliverables | CI/CD pipeline setup (Vercel/Railway) · Vercel & Railway MySQL provisioning · Rate limiting hardening · Mobile responsiveness QA · Lighthouse scores >= 90 · SSL + custom domain mapping |
+| Dependencies | All local phases complete |
 | Complexity | Medium |
 | Estimated Duration | 1 week |
 

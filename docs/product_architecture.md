@@ -60,7 +60,7 @@
 - **Inspection Module:** Standardized inspection checklists for all vehicles.
 - **Rental Engine:** Availability calendar, blackout dates, guest checkout, manual payment instructions.
 - **Lead CRM:** Source tracking, staff assignment, stage tracking (New to Won/Lost).
-- **Cloudinary Integration:** Direct upload workflow, on-the-fly optimization.
+- **Local File Storage (Multer):** Local upload workflow, serving assets via NestJS (Cloudinary integration deferred to production).
 - **RBAC Admin:** Role-based dashboard (Super Admin, Sales, Rental).
 
 ### Phase 1.5
@@ -109,7 +109,7 @@ The Super Admin lands on a high-level analytics view containing:
    - `id`, `slug`, `make`, `model`, `year`, `color`, `vin` (null), `plate_number` (null), `chassis_number` (null), `engine_number` (null), `type` (sale, rental, both), `status` (available, sold, rented, maintenance), `is_featured`, `is_new_arrival`.
    - *SEO:* `meta_title`, `meta_description`.
 3. **`vehicle_images`**
-   - `id`, `vehicle_id`, `cloudinary_url`, `cloudinary_public_id`, `is_primary`, `sort_order`.
+   - `id`, `vehicle_id`, `cloudinary_url` (stores local relative path), `cloudinary_public_id` (used for local unique identifiers), `is_primary`, `sort_order`.
 4. **`vehicle_inspections`**
    - `id`, `vehicle_id`, `inspection_date`, `inspector_name`, `engine_status`, `transmission_status`, `suspension_status`, `electrical_status`, `ac_status`, `tires_status`, `interior_status`, `exterior_status`, `general_notes`.
 5. **`sales_listings`** & **`rental_listings`**
@@ -161,15 +161,14 @@ erDiagram
 - **Authorization:** Middleware strictly enforcing RBAC (Role-Based Access Control) on all admin routes.
 - **API Security:** Helmet for security headers, strict CORS policies, and rate-limiting on public lead/booking endpoints to prevent spam.
 
-### Image Architecture (Cloudinary)
+### Image Architecture (Local Storage / Multer)
 - **Do not store base64 in database.** 
 - **Upload Workflow:** 
-  1. Frontend requests a signed upload signature from Backend.
-  2. Frontend uploads directly to Cloudinary using the signature (offloading bandwidth from your server).
-  3. Cloudinary returns a secure URL and `public_id`.
-  4. Frontend sends the URL and `public_id` to Backend to save in the `vehicle_images` table.
-- **Folder Structure in Cloudinary:** `soulani/vehicles/`, `soulani/licenses/`, `soulani/testimonials/`.
-- **Optimization:** Utilize Cloudinary's dynamic URL transformations (e.g., `f_auto,q_auto,w_800`) for responsive, fast-loading galleries.
+  1. Frontend uploads files directly to the NestJS API (using multipart/form-data).
+  2. NestJS intercepts files using Multer, generates unique file names, and saves files locally under `/uploads/`.
+  3. NestJS saves the local relative URL (e.g., `/uploads/vehicles/filename.jpg`) to the database (`cloudinaryUrl` field will store the local path for seamless future migration).
+- **Folder Structure on Local Disk:** `apps/api/uploads/vehicles/`, `apps/api/uploads/licenses/`, `apps/api/uploads/testimonials/`.
+- **Future Migration:** In Phase 7 (Production Launch), this can be swapped to Cloudinary for global CDN caching and optimization.
 
 ### Data Integrity & Audit Trail API
 - **Audit Logging Middleware:** Every write operation (POST/PUT/DELETE) routes through an audit middleware.
@@ -191,7 +190,7 @@ Assuming a modern Monorepo or distinct Frontend/Backend approach (e.g., Next.js 
 ├── /client (Next.js - Public Website & Customer Portal)
 │   ├── /app                # App Router (Pages: /, /sales, /rental)
 │   ├── /components         # Reusable UI (Hero, CarCard, Forms)
-│   ├── /lib                # API clients, Cloudinary helpers
+│   ├── /lib                # API clients, local upload helpers
 │   └── /types              # Shared TypeScript interfaces
 ├── /admin (React/Vite - RBAC Dashboard)
 │   ├── /src
@@ -201,11 +200,11 @@ Assuming a modern Monorepo or distinct Frontend/Backend approach (e.g., Next.js 
 └── /api (Node.js / Express or NestJS)
     ├── /src
     │   ├── /controllers    # Route handlers
-    │   ├── /services       # Business logic (Bookings, CRM, Cloudinary)
+    │   ├── /services       # Business logic (Bookings, CRM, uploads)
     │   ├── /models         # Database schemas/entities
     │   ├── /middlewares    # AuthGuard, RoleGuard, RateLimiter
     │   └── /utils          # Logger, Error Handling
-    ├── .env                # Environment variables (DB, JWT_SECRET, CLOUDINARY_URL)
+    ├── .env                # Environment variables (DB, JWT_SECRET, UPLOAD_DIR)
     └── /logs               # Application audit logs
 ```
 
@@ -215,7 +214,7 @@ Assuming a modern Monorepo or distinct Frontend/Backend approach (e.g., Next.js 
 
 ### Phase 1: The Foundation (MVP)
 *Goal: Launch business operations, capture leads securely, and digitize rental tracking.*
-- Database design and Cloudinary integration.
+- Database design and Local File Storage (Multer) integration.
 - RBAC Admin Dashboard (Vehicle management, Inspection logging, CMS).
 - Public Website with dynamic SEO pages.
 - Guest Checkout for Rentals with manual payment verification.
