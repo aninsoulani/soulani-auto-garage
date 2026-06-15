@@ -1,0 +1,3 @@
+export type LeadType = 'SALES_INQUIRY' | 'TEST_DRIVE_REQUEST' | 'MAKE_OFFER' | 'RENTAL_INQUIRY' | 'LONG_TERM_QUOTE';
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'NEGOTIATING' | 'TEST_DRIVE_SCHEDULED' | 'WON' | 'LOST';
+export type LeadSource = 'ORGANIC' | 'GOOGLE_ADS' | 'FACEBOOK' | 'INSTAGRAM' | 'DIRECT' | 'WHATSAPP' | 'REFERRAL';

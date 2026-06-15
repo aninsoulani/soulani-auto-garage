@@ -1,0 +1,467 @@
+// schema.prisma
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  SUPER_ADMIN
+  SALES_STAFF
+  RENTAL_STAFF
+}
+
+enum VehicleType {
+  SALE
+  RENTAL
+  BOTH
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  SOLD
+  RENTED
+  MAINTENANCE
+}
+
+enum InspectionStatus {
+  PASS
+  FAIL
+  NEEDS_ATTENTION
+}
+
+enum LeadType {
+  SALES_INQUIRY
+  TEST_DRIVE_REQUEST
+  MAKE_OFFER
+  RENTAL_INQUIRY
+  LONG_TERM_QUOTE
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  NEGOTIATING
+  TEST_DRIVE_SCHEDULED
+  WON
+  LOST
+}
+
+enum LeadSource {
+  ORGANIC
+  GOOGLE_ADS
+  FACEBOOK
+  INSTAGRAM
+  DIRECT
+  WHATSAPP
+  REFERRAL
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum BlackoutReason {
+  MAINTENANCE
+  ADMIN_BLOCK
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  RESTORE
+}
+
+enum TransmissionType {
+  MANUAL
+  AUTOMATIC
+  CVT
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  HYBRID
+  ELECTRIC
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @default(uuid())
+  name          String
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  role          UserRole
+  isActive      Boolean   @default(true) @map("is_active")
+
+  // Audit Fields
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdById   Int?      @map("created_by_id")
+
+  // Relations
+  assignedLeads Lead[]         @relation("LeadAssignee")
+  leadFollowups LeadFollowup[] @relation("UserFollowups")
+
+  @@index([role, isActive, deletedAt])
+  @@map("users")
+}
+
+model Vehicle {
+  id              Int               @id @default(autoincrement())
+  slug            String            @unique
+  make            String
+  model           String
+  year            Int
+  color           String
+  vin             String?           @unique
+  plateNumber     String?           @unique @map("plate_number")
+  chassisNumber   String?           @unique @map("chassis_number")
+  engineNumber    String?           @unique @map("engine_number")
+  type            VehicleType
+  status          VehicleStatus     @default(AVAILABLE)
+  isFeatured      Boolean           @default(false) @map("is_featured")
+  isNewArrival    Boolean           @default(true) @map("is_new_arrival")
+  
+  mileage         Int?
+  transmission    TransmissionType?
+  fuelType        FuelType?         @map("fuel_type")
+  description     String?           @db.Text
+
+  metaTitle       String?           @map("meta_title")
+  metaDescription String?           @db.Text @map("meta_description")
+
+  // Audit Fields
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  deletedAt       DateTime?         @map("deleted_at")
+  createdById     Int?              @map("created_by_id")
+
+  // Relations
+  images          VehicleImage[]
+  inspections     VehicleInspection[]
+  salesListing    SalesListing?
+  rentalListing   RentalListing?
+  blackoutDates   BlackoutDate[]
+  leads           Lead[]
+  analytics       VehicleAnalytics?
+
+  @@index([type])
+  @@index([status])
+  @@index([status, type, deletedAt])
+  @@index([status, isFeatured, deletedAt])
+  @@index([mileage])
+  @@index([transmission])
+  @@index([fuelType])
+  @@fulltext([make, model])
+  @@map("vehicles")
+}
+
+model VehicleImage {
+  id                 Int      @id @default(autoincrement())
+  vehicleId          Int      @map("vehicle_id")
+  cloudinaryUrl      String   @map("cloudinary_url")
+  cloudinaryPublicId String   @unique @map("cloudinary_public_id")
+  isPrimary          Boolean  @default(false) @map("is_primary")
+  sortOrder          Int      @default(0) @map("sort_order")
+
+  // Audit Fields
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  createdById        Int?     @map("created_by_id")
+
+  // Relations
+  vehicle            Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, isPrimary])
+  @@map("vehicle_images")
+}
+
+model VehicleInspection {
+  id                 Int              @id @default(autoincrement())
+  vehicleId          Int              @map("vehicle_id")
+  inspectionDate     DateTime         @map("inspection_date")
+  inspectorName      String           @map("inspector_name")
+  
+  engineStatus       InspectionStatus @map("engine_status")
+  transmissionStatus InspectionStatus @map("transmission_status")
+  suspensionStatus   InspectionStatus @map("suspension_status")
+  electricalStatus   InspectionStatus @map("electrical_status")
+  acStatus           InspectionStatus @map("ac_status")
+  tiresStatus        InspectionStatus @map("tires_status")
+  interiorStatus     InspectionStatus @map("interior_status")
+  exteriorStatus     InspectionStatus @map("exterior_status")
+  
+  generalNotes       String?          @db.Text @map("general_notes")
+
+  // Audit Fields
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  deletedAt          DateTime?        @map("deleted_at")
+  createdById        Int?             @map("created_by_id")
+
+  // Relations
+  vehicle            Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("vehicle_inspections")
+}
+
+model SalesListing {
+  id             Int       @id @default(autoincrement())
+  vehicleId      Int       @unique @map("vehicle_id")
+  price          Decimal   @db.Decimal(15, 2)
+  previousOwners Int       @default(0) @map("previous_owners")
+
+  // Audit Fields
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+  createdById    Int?      @map("created_by_id")
+
+  // Relations
+  vehicle        Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([price])
+  @@map("sales_listings")
+}
+
+model RentalListing {
+  id                  Int       @id @default(autoincrement())
+  vehicleId           Int       @unique @map("vehicle_id")
+  dailyRate           Decimal   @db.Decimal(15, 2) @map("daily_rate")
+  weeklyRate          Decimal?  @db.Decimal(15, 2) @map("weekly_rate")
+  depositAmount       Decimal   @db.Decimal(15, 2) @map("deposit_amount")
+  isLongTermEligible  Boolean   @default(false) @map("is_long_term_eligible")
+
+  // Audit Fields
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+  createdById         Int?      @map("created_by_id")
+
+  // Relations
+  vehicle             Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  bookings            RentalBooking[]
+
+  @@map("rental_listings")
+}
+
+model Lead {
+  id                Int       @id @default(autoincrement())
+  leadReferenceId   String    @unique @map("lead_reference_id")
+  vehicleId         Int       @map("vehicle_id")
+  assignedToId      Int?      @map("assigned_to_id")
+  
+  customerName      String    @map("customer_name")
+  customerPhone     String    @map("customer_phone")
+  customerEmail     String?   @map("customer_email")
+  type              LeadType
+  offeredPrice      Decimal?  @db.Decimal(15, 2) @map("offered_price")
+  source            LeadSource?
+  status            LeadStatus @default(NEW)
+  message           String?    @db.Text
+
+  // Audit Fields
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+  createdById       Int?      @map("created_by_id")
+
+  // Relations
+  vehicle           Vehicle        @relation(fields: [vehicleId], references: [id])
+  assignedTo        User?          @relation("LeadAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  followups         LeadFollowup[]
+
+  @@index([vehicleId])
+  @@index([assignedToId])
+  @@index([assignedToId, status, deletedAt])
+  @@index([status])
+  @@index([customerEmail])
+  @@index([source])
+  @@map("leads")
+}
+
+model LeadFollowup {
+  id              Int       @id @default(autoincrement())
+  leadId          Int       @map("lead_id")
+  userId          Int       @map("user_id")
+  noteText        String    @db.Text @map("note_text")
+  interactionDate DateTime  @default(now()) @map("interaction_date")
+
+  // Audit Fields
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  // Relations
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user            User      @relation("UserFollowups", fields: [userId], references: [id])
+
+  @@index([leadId])
+  @@index([userId])
+  @@map("lead_followups")
+}
+
+model RentalBooking {
+  id                Int           @id @default(autoincrement())
+  rentalListingId   Int           @map("rental_listing_id")
+  
+  customerName      String        @map("customer_name")
+  customerPhone     String        @map("customer_phone")
+  customerEmail     String        @map("customer_email")
+  identityNumber    String?       @map("identity_number")
+  licenseImageUrl   String?       @map("license_image_url")
+  
+  startDate         DateTime      @map("start_date")
+  endDate           DateTime      @map("end_date")
+  
+  paymentMethodId   Int           @map("payment_method_id")
+  totalPrice        Decimal       @db.Decimal(15, 2) @map("total_price")
+  status            BookingStatus @default(PENDING_PAYMENT)
+  whatsappOptIn     Boolean       @default(false) @map("whatsapp_opt_in")
+
+  // Audit Fields
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  deletedAt         DateTime?     @map("deleted_at")
+  createdById       Int?          @map("created_by_id")
+
+  // Relations
+  rentalListing     RentalListing @relation(fields: [rentalListingId], references: [id])
+  paymentMethod     PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@index([rentalListingId])
+  @@index([rentalListingId, status, startDate, endDate])
+  @@index([paymentMethodId])
+  @@index([startDate, endDate])
+  @@index([status])
+  @@map("rental_bookings")
+}
+
+model BlackoutDate {
+  id          Int            @id @default(autoincrement())
+  vehicleId   Int            @map("vehicle_id")
+  startDate   DateTime       @map("start_date")
+  endDate     DateTime       @map("end_date")
+  reason      BlackoutReason
+
+  // Audit Fields
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  deletedAt   DateTime?      @map("deleted_at")
+  createdById Int?           @map("created_by_id")
+
+  // Relations
+  vehicle     Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@index([startDate, endDate])
+  @@map("blackout_dates")
+}
+
+model VehicleAnalytics {
+  id                 Int      @id @default(autoincrement())
+  vehicleId          Int      @unique @map("vehicle_id")
+  viewCount          Int      @default(0) @map("view_count")
+  inquiryCount       Int      @default(0) @map("inquiry_count")
+  offerCount         Int      @default(0) @map("offer_count")
+  rentalRequestCount Int      @default(0) @map("rental_request_count")
+  lastUpdated        DateTime @updatedAt @map("last_updated")
+
+  // Relations
+  vehicle            Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_analytics")
+}
+
+model AuditLog {
+  id            Int         @id @default(autoincrement())
+  userId        Int?        @map("user_id")
+  action        AuditAction
+  moduleName    String      @map("module_name")
+  recordId      Int         @map("record_id")
+  previousValue Json?       @map("previous_value")
+  newValue      Json?       @map("new_value")
+  timestamp     DateTime    @default(now())
+
+  // Note: No strict foreign key constraint to User table.
+  // This allows the audit log table to be archived or decoupled
+  // from the main transactional database without breaking relations.
+
+  @@index([moduleName, recordId])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model PaymentMethod {
+  id           Int             @id @default(autoincrement())
+  name         String
+  type         String
+  instructions String          @db.Text
+  isActive     Boolean         @default(true) @map("is_active")
+
+  // Audit Fields
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  deletedAt    DateTime?       @map("deleted_at")
+  createdById  Int?            @map("created_by_id")
+
+  // Relations
+  bookings     RentalBooking[]
+
+  @@map("payment_methods")
+}
+
+model Testimonial {
+  id          Int       @id @default(autoincrement())
+  authorName  String    @map("author_name")
+  authorTitle String?   @map("author_title")
+  rating      Int
+  quoteText   String    @db.Text @map("quote_text")
+  isPublished Boolean   @default(false) @map("is_published")
+
+  // Audit Fields
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  createdById Int?      @map("created_by_id")
+
+  @@map("testimonials")
+}
+
+model HomepageContent {
+  id          Int       @id @default(autoincrement())
+  key         String    @unique
+  value       Json
+  isActive    Boolean   @default(true) @map("is_active")
+
+  // Audit Fields
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  createdById Int?      @map("created_by_id")
+
+  @@map("homepage_content")
+}
