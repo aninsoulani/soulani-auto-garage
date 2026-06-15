@@ -10,19 +10,19 @@ This project is built using [Turborepo](https://turborepo.org/) and is structure
 - **`apps/api`**: The backend REST API built with [NestJS](https://nestjs.com/), providing robust endpoints, JWT authentication, and global exception handling.
 - **Database Layer**: Managed by [Prisma ORM](https://www.prisma.io/) connecting to a MySQL database, featuring strict uniqueness constraints, soft deletes, and robust relational mapping.
 
-## 🚀 Current Progress: Phase 2 Complete
+## 🚀 Current Progress: Phase 3 Complete
 
-The application has successfully completed **Phase 1 (Foundation)** and **Phase 2 (Vehicle Inventory & Content Management)**.
+The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (Vehicle Inventory)**, and **Phase 3 (Data & API Foundations)**.
 
 ### Features Implemented:
+- **Public & Admin UI:** Beautiful, dynamic Next.js App Router public landing page, sales listing, and vehicle detail pages (`/sales/[slug]`). Admin dashboard for complete vehicle lifecycle management.
 - **Authentication & RBAC:** Secure JWT-based login with role-based access control (Super Admin, Sales Staff, Rental Staff). Session expiration is strictly enforced globally.
-- **Inventory CRUD:** Comprehensive vehicle management including make, model, year, VIN, and plate number tracking.
-- **Image Pipeline:** Full image upload functionality using Multer, supporting primary image selection, dynamic static serving, and CORS handling.
+- **Inventory CRUD:** Comprehensive vehicle management including specific listings (Sale/Rental/Both), deep `CarType` categorization, and specs tracking.
+- **Image Pipeline:** Full image upload functionality using Multer (supporting JPG, PNG, WebP, JFIF), supporting drag-and-drop ordering (`sortOrder`) and Primary image handling.
 - **Inspections Module:** A dedicated tab for logging detailed vehicle inspection statuses across Engine, Transmission, Suspension, Electrical, A/C, and more.
-- **Pricing Configuration:** Granular pricing settings bifurcated by vehicle type (Sale vs. Rental), including daily rates and deposit amounts.
-- **Audit Logging:** Automated, background tracking of core events (CREATE, UPDATE, DELETE) across the inventory.
-- **Pagination & Filtering:** Efficient server-side pagination with API-level filtering.
-- **Error Handling:** Custom Prisma Exception Filters translating database constraint errors (e.g., duplicate plate numbers) into human-readable UI alerts.
+- **Leads Module:** Robust API for tracking customer inquiries and auto-generating Reference IDs (e.g. `LD-2026-XYZ12`), with WhatsApp redirect URL builder.
+- **Analytics & Dashboard:** Global Admin Dashboard providing live metrics mapping and inventory distributions. Tracks simple view metrics.
+- **Audit & Security:** Automated background tracking of core events. Global rate limiting (`@nestjs/throttler`) to protect public endpoints.
 
 ## 🛠️ Getting Started
 
@@ -43,16 +43,18 @@ The application has successfully completed **Phase 1 (Foundation)** and **Phase 
    # API Example
    DATABASE_URL="mysql://user:password@localhost:3306/soulani_garage"
    JWT_SECRET="your-super-secret-key"
+   WHATSAPP_NUMBER="6281210663530"
    
    # Web Example
    NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
    ```
 
-3. Run database migrations:
+3. Run database migrations and seeds:
    ```sh
    cd apps/api
    npx prisma generate
    npx prisma db push
+   npx prisma db seed
    ```
 
 ### Running Locally
@@ -62,14 +64,14 @@ To start both the Web App and the API concurrently:
 ```sh
 pnpm dev
 ```
-- The **Frontend** will be available at `http://localhost:3000`
+- The **Public UI** will be available at `http://localhost:3000`
+- The **Admin Portal** will be available at `http://localhost:3000/admin`
 - The **API** will be available at `http://localhost:3001/api/v1`
 
 ## 🔮 Upcoming Phases
-- **Phase 3:** Lead Management & Sales CRM
-- **Phase 4:** Rental Operations & Booking Calendar
-- **Phase 5:** Notifications & Follow-ups
-- **Phase 6:** Owner Analytics Dashboard & CMS
+- **Phase 4:** CMS & Homepage Customization
+- **Phase 5:** Rental Operations & Booking Calendar
+- **Phase 6:** Advanced CRM, Notifications & Follow-ups
 - **Phase 7:** Production Hardening & Cloud Deployment
 
 ---
