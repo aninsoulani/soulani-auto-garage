@@ -1,0 +1,77 @@
+import { Controller, Get, Post, Body, Param, Patch, Query, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import * as fs from 'fs';
+import { RentalBookingsService } from './rental-bookings.service';
+import { CreateRentalBookingDto } from './dto/create-rental-booking.dto';
+import { UpdateRentalBookingStatusDto } from './dto/update-rental-booking-status.dto';
+import { QueryRentalBookingDto } from './dto/query-rental-booking.dto';
+import { Public } from '../common/decorators/public.decorator';
+
+const receiptsDir = './uploads/receipts';
+if (!fs.existsSync(receiptsDir)) {
+  fs.mkdirSync(receiptsDir, { recursive: true });
+}
+
+@Controller('rental-bookings')
+export class RentalBookingsController {
+  constructor(private readonly bookingsService: RentalBookingsService) {}
+
+  @Public()
+  @Throttle({ short: { limit: 10, ttl: 60000 }, medium: { limit: 50, ttl: 3600000 } })
+  @Post()
+  create(@Body() createDto: CreateRentalBookingDto, @Request() req) {
+    // Optionally capture user.id if logged in, else null for guest checkout
+    const userId = req.user?.id;
+    return this.bookingsService.create(createDto, userId);
+  }
+
+  @SkipThrottle()
+  @Get()
+  findAll(@Query() query: QueryRentalBookingDto) {
+    return this.bookingsService.findAll(query);
+  }
+
+  @SkipThrottle()
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.bookingsService.findOne(+id);
+  }
+
+  @SkipThrottle()
+  @Patch(':id/status')
+  updateStatus(@Param('id') id: string, @Body() updateDto: UpdateRentalBookingStatusDto, @Request() req) {
+    return this.bookingsService.updateStatus(+id, updateDto, req.user.id);
+  }
+
+  @Public() // Allow guests to upload receipts
+  @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
+  @Post(':id/receipt')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: receiptsDir,
+      filename: (req, file, cb) => {
+        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+        cb(null, `${randomName}${extname(file.originalname)}`);
+      }
+    }),
+    fileFilter: (req, file, cb) => {
+      if (!file.originalname.match(/\.(jpg|jpeg|png|webp|jfif)$/i)) {
+        return cb(new BadRequestException('Only image files (JPG, PNG, WebP, JFIF) are allowed!'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  }))
+  uploadReceipt(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req
+  ) {
+    if (!file) throw new BadRequestException('File is required');
+    const userId = req.user?.id;
+    return this.bookingsService.uploadReceipt(+id, file, userId);
+  }
+}

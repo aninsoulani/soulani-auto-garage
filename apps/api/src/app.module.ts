@@ -17,6 +17,7 @@ import { VehicleInspectionsModule } from './vehicle-inspections/vehicle-inspecti
 import { ListingsModule } from './listings/listings.module';
 import { LeadsModule } from './leads/leads.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { RentalBookingsModule } from './rental-bookings/rental-bookings.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     ListingsModule,
     LeadsModule,
     AnalyticsModule,
+    RentalBookingsModule,
   ],
   controllers: [AppController],
   providers: [

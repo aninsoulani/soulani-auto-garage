@@ -20,7 +20,7 @@ enum UserRole {
   RENTAL_STAFF
 }
 
-enum VehicleType {
+enum ListingType {
   SALE
   RENTAL
   BOTH
@@ -100,6 +100,19 @@ enum FuelType {
   ELECTRIC
 }
 
+enum CarType {
+  SUV
+  MPV
+  HATCHBACK
+  SEDAN
+  COUPE
+  CONVERTIBLE
+  WAGON
+  PICKUP
+  VAN
+  CROSSOVER
+}
+
 // ==========================================
 // MODELS
 // ==========================================
@@ -133,12 +146,13 @@ model Vehicle {
   make            String
   model           String
   year            Int
+  carType         CarType           @default(SUV) @map("car_type")
   color           String
   vin             String?           @unique
   plateNumber     String?           @unique @map("plate_number")
   chassisNumber   String?           @unique @map("chassis_number")
   engineNumber    String?           @unique @map("engine_number")
-  type            VehicleType
+  listingType     ListingType       @map("listing_type")
   status          VehicleStatus     @default(AVAILABLE)
   isFeatured      Boolean           @default(false) @map("is_featured")
   isNewArrival    Boolean           @default(true) @map("is_new_arrival")
@@ -166,9 +180,9 @@ model Vehicle {
   leads           Lead[]
   analytics       VehicleAnalytics?
 
-  @@index([type])
+  @@index([listingType])
   @@index([status])
-  @@index([status, type, deletedAt])
+  @@index([status, listingType, deletedAt])
   @@index([status, isFeatured, deletedAt])
   @@index([mileage])
   @@index([transmission])
@@ -180,8 +194,8 @@ model Vehicle {
 model VehicleImage {
   id                 Int      @id @default(autoincrement())
   vehicleId          Int      @map("vehicle_id")
-  cloudinaryUrl      String   @map("cloudinary_url")
-  cloudinaryPublicId String   @unique @map("cloudinary_public_id")
+  fileUrl            String   @map("file_url")
+  filePath           String   @unique @map("file_path")
   isPrimary          Boolean  @default(false) @map("is_primary")
   sortOrder          Int      @default(0) @map("sort_order")
 
@@ -332,6 +346,7 @@ model RentalBooking {
   customerEmail     String        @map("customer_email")
   identityNumber    String?       @map("identity_number")
   licenseImageUrl   String?       @map("license_image_url")
+  proofOfTransferUrl String?      @map("proof_of_transfer_url")
   
   startDate         DateTime      @map("start_date")
   endDate           DateTime      @map("end_date")

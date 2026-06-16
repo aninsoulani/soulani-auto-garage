@@ -138,16 +138,26 @@ export class VehiclesService {
       ];
     }
 
-    // Price range filter via salesListing join
+    // Price range filter
     if (minPrice !== undefined || maxPrice !== undefined) {
-      where.salesListing = {
-        deletedAt: null,
-        price: {
-          ...(minPrice !== undefined ? { gte: minPrice } : {}),
-          ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
-        },
+      const priceCondition = {
+        ...(minPrice !== undefined ? { gte: minPrice } : {}),
+        ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
       };
+
+      if (listingType === 'SALE') {
+        where.salesListing = { deletedAt: null, price: priceCondition };
+      } else if (listingType === 'RENTAL') {
+        where.rentalListing = { deletedAt: null, dailyRate: priceCondition };
+      } else {
+        where.OR = [
+          ...(where.OR || []),
+          { salesListing: { deletedAt: null, price: priceCondition } },
+          { rentalListing: { deletedAt: null, dailyRate: priceCondition } }
+        ];
+      }
     }
+
 
     // Sort strategy
     let orderBy: any = { createdAt: 'desc' }; // newest (default)

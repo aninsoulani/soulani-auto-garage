@@ -346,6 +346,7 @@ model RentalBooking {
   customerEmail     String        @map("customer_email")
   identityNumber    String?       @map("identity_number")
   licenseImageUrl   String?       @map("license_image_url")
+  proofOfTransferUrl String?      @map("proof_of_transfer_url")
   
   startDate         DateTime      @map("start_date")
   endDate           DateTime      @map("end_date")
