@@ -1,4 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Request, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -12,14 +15,54 @@ export class VehiclesController {
 
   @SkipThrottle()
   @Post()
-  create(@Body() createVehicleDto: CreateVehicleDto, @Request() req) {
-    return this.vehiclesService.create(createVehicleDto, req.user.id);
+  @UseInterceptors(FilesInterceptor('files', 10, {
+    storage: diskStorage({
+      destination: './uploads/vehicles',
+      filename: (req, file, cb) => {
+        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+        cb(null, `${randomName}${extname(file.originalname)}`);
+      }
+    }),
+    fileFilter: (req, file, cb) => {
+      if (!file.originalname.match(/\.(jpg|jpeg|png|webp|jfif)$/i)) {
+        return cb(new BadRequestException('Only image files (JPG, PNG, WebP, JFIF) are allowed!'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  }))
+  create(
+    @Body('data') dataString: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Request() req
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one vehicle image is required.');
+    }
+    let createVehicleDto: CreateVehicleDto;
+    try {
+      createVehicleDto = JSON.parse(dataString);
+    } catch (err) {
+      throw new BadRequestException('Invalid JSON data payload');
+    }
+
+    if (!createVehicleDto.inspectionDate || !createVehicleDto.inspectorName) {
+      throw new BadRequestException('Inspection date and inspector name are required.');
+    }
+    return this.vehiclesService.create(createVehicleDto, files, req.user.id);
   }
 
   @Public()
   @Throttle({ short: { limit: 1000, ttl: 60000 }, medium: { limit: 10000, ttl: 3600000 } })
   @Get()
-  findAll(@Query() query: QueryVehicleDto) {
+  findAllPublic(@Query() query: QueryVehicleDto) {
+    // Rely on service to filter out DRAFT instead of hardcoding ACTIVE
+    return this.vehiclesService.findAll(query);
+  }
+
+  @SkipThrottle()
+  @Get('admin/list')
+  findAdminAll(@Query() query: QueryVehicleDto) {
     return this.vehiclesService.findAll(query);
   }
 
@@ -46,6 +89,12 @@ export class VehiclesController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateVehicleDto: UpdateVehicleDto, @Request() req) {
     return this.vehiclesService.update(+id, updateVehicleDto, req.user.id);
+  }
+
+  @SkipThrottle()
+  @Patch(':id/publish')
+  publish(@Param('id') id: string) {
+    return this.vehiclesService.publishVehicle(+id);
   }
 
   @SkipThrottle()

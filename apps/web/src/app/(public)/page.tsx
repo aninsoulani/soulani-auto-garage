@@ -27,11 +27,11 @@ export const revalidate = 3600;
 // ─── Body Types ──────────────────────────────────────────────────────────────
 
 const BODY_TYPES = [
-  { label: 'SUV', emoji: '🚙', href: '/sales?carType=SUV' },
-  { label: 'MPV', emoji: '🚐', href: '/sales?carType=MPV' },
-  { label: 'Hatchback', emoji: '🚗', href: '/sales?carType=HATCHBACK' },
-  { label: 'Sedan', emoji: '🚘', href: '/sales?carType=SEDAN' },
-  { label: 'Crossover', emoji: '✨', href: '/sales?carType=CROSSOVER' },
+  { label: 'SUV', href: '/sales?carType=SUV' },
+  { label: 'MPV', href: '/sales?carType=MPV' },
+  { label: 'Hatchback', href: '/sales?carType=HATCHBACK' },
+  { label: 'Sedan', href: '/sales?carType=SEDAN' },
+  { label: 'Crossover', href: '/sales?carType=CROSSOVER' },
 ];
 
 // ─── Trust Items ─────────────────────────────────────────────────────────────
@@ -175,16 +175,13 @@ export default async function HomePage() {
         <section>
           <SectionHeader title="Telusuri Berdasarkan Tipe" />
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-5">
-            {BODY_TYPES.map(({ label, emoji, href }) => (
+            {BODY_TYPES.map(({ label, href }) => (
               <Link
                 key={label}
                 href={href}
-                className="flex flex-col items-center gap-2 bg-white border border-slate-100 rounded-2xl px-5 py-4 hover:border-blue-300 hover:shadow-md transition-all duration-150 min-w-[100px] sm:min-w-0 text-center group"
+                className="border border-gray-200 bg-white hover:border-gray-900 transition-all duration-200 text-sm font-medium text-gray-900 tracking-wide px-6 py-3 rounded-full text-center shrink-0 sm:shrink"
               >
-                <span className="text-3xl group-hover:scale-110 transition-transform duration-150">
-                  {emoji}
-                </span>
-                <span className="text-sm font-semibold text-slate-700">{label}</span>
+                {label}
               </Link>
             ))}
           </div>

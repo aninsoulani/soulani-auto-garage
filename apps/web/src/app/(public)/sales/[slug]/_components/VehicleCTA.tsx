@@ -4,11 +4,12 @@ import { MessageCircle } from 'lucide-react';
 import { formatIDR } from '@/lib/utils';
 import InquirySheet from '@/components/leads/InquirySheet';
 import InquiryForm from '@/components/leads/InquiryForm';
+import { ListingType } from '@/types/api.types';
 
 interface VehicleCTAProps {
   vehicleId: number;
   vehicleName: string;
-  listingType?: 'SALE' | 'RENTAL' | 'BOTH';
+  listingType?: ListingType;
   price: string | null | undefined;
   whatsappUrl: string;
 }

@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import Link from 'next/link';
 import { Edit, Trash2, Plus } from 'lucide-react';
+import { PaginatedResponse } from '@/types/api.types';
 import Swal from 'sweetalert2';
 
 interface Vehicle {
@@ -49,8 +50,7 @@ export default function InventoryPage() {
       if (carType) params.set('carType', carType);
       if (status) params.set('status', status);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = await apiFetch<any>(`/vehicles?${params.toString()}`, {
+      const res = await apiFetch<PaginatedResponse<Vehicle>>(`/vehicles/admin/list?${params.toString()}`, {
         token: accessToken || undefined
       });
       setVehicles(res.data);
@@ -77,7 +77,7 @@ export default function InventoryPage() {
     setPage(1);
 
     setLoading(true);
-    apiFetch<any>(`/vehicles?page=1&limit=10&sort=newest`, {
+    apiFetch<PaginatedResponse<Vehicle>>(`/vehicles/admin/list?page=1&limit=10&sort=newest`, {
       token: accessToken || undefined
     })
       .then((res) => {
@@ -173,7 +173,7 @@ export default function InventoryPage() {
           <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
           <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-100">
             <option value="">All</option>
-            <option value="AVAILABLE">Available</option>
+            <option value="ACTIVE">Active</option>
             <option value="SOLD">Sold</option>
             <option value="RENTED">Rented</option>
             <option value="MAINTENANCE">Maintenance</option>

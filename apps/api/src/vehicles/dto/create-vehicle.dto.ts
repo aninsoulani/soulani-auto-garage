@@ -1,6 +1,6 @@
-import { IsString, IsNotEmpty, IsInt, IsEnum, IsOptional, IsBoolean, Min, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, IsEnum, IsOptional, IsBoolean, Min, Max, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ListingType, VehicleStatus, TransmissionType, FuelType, CarType } from '@prisma/client';
+import { ListingType, VehicleStatus, TransmissionType, FuelType, CarType, InspectionStatus } from '@prisma/client';
 
 export class CreateVehicleDto {
   @IsString()
@@ -73,4 +73,26 @@ export class CreateVehicleDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  // Sales Pricing Fields
+  @IsNumber() @IsOptional() salesPrice?: number;
+  @IsInt() @IsOptional() salesPreviousOwners?: number;
+
+  // Rental Pricing Fields
+  @IsNumber() @IsOptional() rentalDailyRate?: number;
+  @IsNumber() @IsOptional() rentalDepositAmount?: number;
+  @IsBoolean() @IsOptional() rentalIsLongTermEligible?: boolean;
+
+  // Inspection Fields
+  @IsString() @IsOptional() inspectionDate?: string;
+  @IsString() @IsOptional() inspectorName?: string;
+  @IsEnum(InspectionStatus) @IsOptional() inspectionEngineStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus) @IsOptional() inspectionTransmissionStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus) @IsOptional() inspectionSuspensionStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus) @IsOptional() inspectionElectricalStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus) @IsOptional() inspectionAcStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus) @IsOptional() inspectionTiresStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus) @IsOptional() inspectionInteriorStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus) @IsOptional() inspectionExteriorStatus?: InspectionStatus;
+  @IsString() @IsOptional() inspectionGeneralNotes?: string;
 }

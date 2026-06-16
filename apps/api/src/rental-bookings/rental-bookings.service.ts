@@ -13,7 +13,7 @@ export class RentalBookingsService {
     private readonly config: ConfigService,
   ) {}
 
-  private resolveFileUrl(localPath: string): string {
+  private resolveFileUrl(localPath: string | null): string | null {
     if (!localPath) return localPath;
     if (localPath.startsWith('http')) return localPath;
     const apiUrl = this.config.get<string>('API_BASE_URL') || 'http://localhost:3001';
@@ -185,7 +185,7 @@ export class RentalBookingsService {
       } else if (updateDto.status === BookingStatus.COMPLETED || updateDto.status === BookingStatus.CANCELLED) {
         await tx.vehicle.update({
           where: { id: existing.rentalListing.vehicleId },
-          data: { status: VehicleStatus.AVAILABLE },
+          data: { status: VehicleStatus.ACTIVE },
         });
       }
 

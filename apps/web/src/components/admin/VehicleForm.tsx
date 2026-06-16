@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { apiFetch } from '@/lib/api';
@@ -17,7 +17,7 @@ const baseSchema = z.object({
   year: z.number().min(1900, 'Year must be between 1900 and the current year.').max(new Date().getFullYear() + 1, 'Year must be between 1900 and the current year.'),
   color: z.string().min(1, 'Color is required.'),
   listingType: z.enum(['SALE', 'RENTAL', 'BOTH']),
-  status: z.enum(['AVAILABLE', 'SOLD', 'RENTED', 'MAINTENANCE']),
+  status: z.enum(['ACTIVE', 'SOLD', 'RENTED', 'MAINTENANCE']),
   vin: z.string().optional().nullable(),
   plateNumber: z.string().min(1, 'Plate number is required.'),
   chassisNumber: z.string().optional().nullable(),
@@ -47,6 +47,7 @@ const baseSchema = z.object({
   inspectionInteriorStatus: z.string().optional().nullable(),
   inspectionExteriorStatus: z.string().optional().nullable(),
   inspectionGeneralNotes: z.string().optional().nullable(),
+  images: z.array(z.any()).optional(),
 });
 
 const getVehicleSchema = (isEditMode: boolean) => baseSchema.superRefine((data, ctx) => {
@@ -61,19 +62,15 @@ const getVehicleSchema = (isEditMode: boolean) => baseSchema.superRefine((data, 
     }
   }
 
-  if (isEditMode) {
-    if (!data.inspectionDate) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspection date is required.', path: ['inspectionDate'] });
-    }
-    if (!data.inspectorName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspector name is required.', path: ['inspectorName'] });
-    }
-  } else {
-    if (data.inspectionDate && !data.inspectorName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspector name is required.', path: ['inspectorName'] });
-    }
-    if (!data.inspectionDate && data.inspectorName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspection date is required.', path: ['inspectionDate'] });
+  if (!data.inspectionDate) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspection date is required.', path: ['inspectionDate'] });
+  }
+  if (!data.inspectorName) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Inspector name is required.', path: ['inspectorName'] });
+  }
+  if (!isEditMode) {
+    if (!data.images || data.images.length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'At least one image is required.', path: ['images'] });
     }
   }
 });
@@ -83,11 +80,64 @@ type VehicleFormValues = z.infer<typeof baseSchema>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function VehicleForm({ initialData, vehicleId }: { initialData?: any, vehicleId?: string }) {
   const [activeTab, setActiveTab] = useState('core');
-  const [imageError, setImageError] = useState(false);
   const { accessToken } = useAuthStore();
   const router = useRouter();
 
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<VehicleFormValues>({
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [localImagePreviews, setLocalImagePreviews] = useState<string[]>([]);
+
+  const handleLocalUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      const newFiles = [...selectedFiles, ...filesArray];
+      setSelectedFiles(newFiles);
+      
+      const previews = filesArray.map(file => URL.createObjectURL(file));
+      setLocalImagePreviews(prev => [...prev, ...previews]);
+      
+      setValue('images', newFiles, { shouldValidate: true });
+    }
+  };
+
+  const removeLocalImage = (index: number) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index);
+    setSelectedFiles(newFiles);
+    setLocalImagePreviews(prev => prev.filter((_, i) => i !== index));
+    
+    setValue('images', newFiles, { shouldValidate: true });
+  };
+
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const newFiles = [...selectedFiles];
+    const [draggedItem] = newFiles.splice(draggedIndex, 1);
+    newFiles.splice(targetIndex, 0, draggedItem);
+    setSelectedFiles(newFiles);
+
+    const newPreviews = [...localImagePreviews];
+    const [draggedPreview] = newPreviews.splice(draggedIndex, 1);
+    newPreviews.splice(targetIndex, 0, draggedPreview);
+    setLocalImagePreviews(newPreviews);
+    
+    setDraggedIndex(null);
+    setValue('images', newFiles, { shouldValidate: true });
+  };
+
+  const { register, handleSubmit, watch, control, setValue, trigger, formState: { errors, isSubmitting } } = useForm<VehicleFormValues>({
     resolver: zodResolver(getVehicleSchema(!!vehicleId)),
     defaultValues: {
       make: initialData?.make || '',
@@ -95,7 +145,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
       year: initialData?.year || new Date().getFullYear(),
       color: initialData?.color || '',
       listingType: initialData?.listingType || 'SALE',
-      status: initialData?.status || 'AVAILABLE',
+      status: initialData?.status || 'ACTIVE',
       vin: initialData?.vin || '',
       plateNumber: initialData?.plateNumber || '',
       chassisNumber: initialData?.chassisNumber || '',
@@ -137,14 +187,11 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const existingVehicle = await apiFetch(`/vehicles/${vehicleId}`) as any;
         if (existingVehicle && (!existingVehicle.images || existingVehicle.images.length === 0)) {
-          setImageError(true);
+          // Fallback logic for edit mode if required
           setActiveTab('images');
           return;
         }
       }
-      setImageError(false);
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const {
         salesPrice, salesPreviousOwners,
         rentalDailyRate, rentalDepositAmount, rentalIsLongTermEligible,
@@ -157,66 +204,98 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
 
       let savedVehicleId = vehicleId;
 
-      if (savedVehicleId) {
+      if (!savedVehicleId) {
+        const formData = new FormData();
+        selectedFiles.forEach(file => {
+          formData.append('files', file);
+        });
+        
+        // Construct the full payload for the wizard
+        const wizardData = {
+          ...coreData,
+          salesPrice: data.salesPrice,
+          salesPreviousOwners: data.salesPreviousOwners,
+          rentalDailyRate: data.rentalDailyRate,
+          rentalDepositAmount: data.rentalDepositAmount,
+          rentalIsLongTermEligible: data.rentalIsLongTermEligible,
+          inspectionDate: data.inspectionDate,
+          inspectorName: data.inspectorName,
+          inspectionEngineStatus: data.inspectionEngineStatus,
+          inspectionTransmissionStatus: data.inspectionTransmissionStatus,
+          inspectionSuspensionStatus: data.inspectionSuspensionStatus,
+          inspectionElectricalStatus: data.inspectionElectricalStatus,
+          inspectionAcStatus: data.inspectionAcStatus,
+          inspectionTiresStatus: data.inspectionTiresStatus,
+          inspectionInteriorStatus: data.inspectionInteriorStatus,
+          inspectionExteriorStatus: data.inspectionExteriorStatus,
+          inspectionGeneralNotes: data.inspectionGeneralNotes
+        };
+        formData.append('data', JSON.stringify(wizardData));
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/vehicles`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: formData
+        });
+
+        if (!res.ok) {
+           const err = await res.json();
+           throw new Error(err.message || 'Creation failed');
+        }
+      } else {
         await apiFetch(`/vehicles/${savedVehicleId}`, {
           method: 'PATCH',
           body: JSON.stringify(coreData),
           token: accessToken || undefined
         });
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await apiFetch<any>('/vehicles', {
-          method: 'POST',
-          body: JSON.stringify(coreData),
-          token: accessToken || undefined
-        });
-        savedVehicleId = res.id;
-      }
 
-      // Automatically save pricing config based on type
-      if (['SALE', 'BOTH'].includes(data.listingType)) {
-        await apiFetch(`/vehicles/${savedVehicleId}/sales-listing`, {
-          method: 'PUT',
-          body: JSON.stringify({ price: data.salesPrice || 0, previousOwners: data.salesPreviousOwners || 0 }),
-          token: accessToken || undefined
-        });
-      }
-
-      if (['RENTAL', 'BOTH'].includes(data.listingType)) {
-        await apiFetch(`/vehicles/${savedVehicleId}/rental-listing`, {
-          method: 'PUT',
-          body: JSON.stringify({ dailyRate: data.rentalDailyRate || 0, depositAmount: data.rentalDepositAmount || 0, isLongTermEligible: data.rentalIsLongTermEligible || false }),
-          token: accessToken || undefined
-        });
-      }
-
-      if (data.inspectionDate && data.inspectorName) {
-        const inspectionPayload = {
-          inspectionDate: new Date(data.inspectionDate).toISOString(),
-          inspectorName: data.inspectorName,
-          engineStatus: data.inspectionEngineStatus,
-          transmissionStatus: data.inspectionTransmissionStatus,
-          suspensionStatus: data.inspectionSuspensionStatus,
-          electricalStatus: data.inspectionElectricalStatus,
-          acStatus: data.inspectionAcStatus,
-          tiresStatus: data.inspectionTiresStatus,
-          interiorStatus: data.inspectionInteriorStatus,
-          exteriorStatus: data.inspectionExteriorStatus,
-          generalNotes: data.inspectionGeneralNotes
-        };
-
-        if (initialData?.inspections?.[0]?.id) {
-          await apiFetch(`/vehicles/${savedVehicleId}/inspections/${initialData.inspections[0].id}`, {
-            method: 'PATCH',
-            body: JSON.stringify(inspectionPayload),
+        // Automatically save pricing config based on type
+        if (['SALE', 'BOTH'].includes(data.listingType)) {
+          await apiFetch(`/vehicles/${savedVehicleId}/sales-listing`, {
+            method: 'PUT',
+            body: JSON.stringify({ price: data.salesPrice || 0, previousOwners: data.salesPreviousOwners || 0 }),
             token: accessToken || undefined
           });
-        } else {
-          await apiFetch(`/vehicles/${savedVehicleId}/inspections`, {
-            method: 'POST',
-            body: JSON.stringify(inspectionPayload),
+        }
+
+        if (['RENTAL', 'BOTH'].includes(data.listingType)) {
+          await apiFetch(`/vehicles/${savedVehicleId}/rental-listing`, {
+            method: 'PUT',
+            body: JSON.stringify({ dailyRate: data.rentalDailyRate || 0, depositAmount: data.rentalDepositAmount || 0, isLongTermEligible: data.rentalIsLongTermEligible || false }),
             token: accessToken || undefined
           });
+        }
+
+        if (data.inspectionDate && data.inspectorName) {
+          const inspectionPayload = {
+            inspectionDate: new Date(data.inspectionDate).toISOString(),
+            inspectorName: data.inspectorName,
+            engineStatus: data.inspectionEngineStatus,
+            transmissionStatus: data.inspectionTransmissionStatus,
+            suspensionStatus: data.inspectionSuspensionStatus,
+            electricalStatus: data.inspectionElectricalStatus,
+            acStatus: data.inspectionAcStatus,
+            tiresStatus: data.inspectionTiresStatus,
+            interiorStatus: data.inspectionInteriorStatus,
+            exteriorStatus: data.inspectionExteriorStatus,
+            generalNotes: data.inspectionGeneralNotes
+          };
+
+          if (initialData?.inspections?.[0]?.id) {
+            await apiFetch(`/vehicles/${savedVehicleId}/inspections/${initialData.inspections[0].id}`, {
+              method: 'PATCH',
+              body: JSON.stringify(inspectionPayload),
+              token: accessToken || undefined
+            });
+          } else {
+            await apiFetch(`/vehicles/${savedVehicleId}/inspections`, {
+              method: 'POST',
+              body: JSON.stringify(inspectionPayload),
+              token: accessToken || undefined
+            });
+          }
         }
       }
 
@@ -243,20 +322,28 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
   const coreErrorKeys = ['make', 'model', 'year', 'color', 'listingType', 'status', 'plateNumber', 'vin', 'chassisNumber', 'engineNumber', 'mileage', 'transmission', 'fuelType', 'description'];
   const pricingErrorKeys = ['salesPrice', 'rentalDailyRate', 'rentalDepositAmount'];
   const inspectionErrorKeys = ['inspectionDate', 'inspectorName', 'inspectionEngineStatus', 'inspectionTransmissionStatus', 'inspectionSuspensionStatus', 'inspectionElectricalStatus', 'inspectionAcStatus', 'inspectionTiresStatus', 'inspectionInteriorStatus', 'inspectionExteriorStatus', 'inspectionGeneralNotes'];
+  const imageErrorKeys = ['images'];
 
   const hasCoreErrors = coreErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
   const hasPricingErrors = pricingErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
   const hasInspectionErrors = inspectionErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
+  const hasImageErrors = imageErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onError = (formErrors: any) => {
-    // Auto-navigate to the first tab with an error so React Hook Form can focus the first invalid field
-    if (coreErrorKeys.some(k => formErrors[k])) {
-      setActiveTab('core');
-    } else if (pricingErrorKeys.some(k => formErrors[k])) {
-      setActiveTab('pricing');
-    } else if (inspectionErrorKeys.some(k => formErrors[k])) {
-      setActiveTab('inspections');
+    // Strict priority: Core -> Images -> Inspections -> Pricing
+    const errorSequence = [
+      { tab: 'core', keys: coreErrorKeys },
+      { tab: 'images', keys: imageErrorKeys },
+      { tab: 'inspections', keys: inspectionErrorKeys },
+      { tab: 'pricing', keys: pricingErrorKeys }
+    ];
+
+    for (const step of errorSequence) {
+      if (step.keys.some(k => formErrors[k])) {
+        setActiveTab(step.tab);
+        break; // Break immediately as per user instructions
+      }
     }
   };
 
@@ -275,7 +362,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
           onClick={() => setActiveTab('images')}
           className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'images' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Images {imageError && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
+          Images {hasImageErrors && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
         </button>
         <button
           type="button"
@@ -327,7 +414,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
               <select {...register('status')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200">
-                <option value="AVAILABLE">Available</option>
+                <option value="ACTIVE">Active</option>
                 <option value="SOLD">Sold</option>
                 <option value="RENTED">Rented</option>
                 <option value="MAINTENANCE">Maintenance</option>
@@ -413,16 +500,44 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         </div>
 
         <div className={activeTab === 'images' ? 'block' : 'hidden'}>
-          {imageError && (
+          {errors.images && typeof errors.images.message === 'string' && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-6">
-              <p className="font-semibold">❌ Validation Error</p>
-              <p className="text-sm mt-1">At least one vehicle image is required.</p>
+              <p className="text-sm mt-1">❌ {errors.images.message}</p>
             </div>
           )}
           {vehicleId ? (
             <ImageUploaderTab vehicleId={vehicleId} initialImages={initialData?.images || []} />
           ) : (
-            <div className="text-gray-500 py-8 text-center italic bg-gray-50 border rounded-lg">Please save the vehicle core details first before uploading images.</div>
+            <div className="space-y-6">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col justify-center items-center gap-2">
+                <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
+                  Select Images (Max 5MB)
+                  <input type="file" multiple accept="image/png, image/jpeg, image/webp, image/jfif" className="hidden" onChange={handleLocalUpload} />
+                </label>
+                <span className="text-xs text-gray-500">JPG, PNG, WebP, and JFIF are supported. Min 1 required.</span>
+              </div>
+
+              <div className="grid grid-cols-4 gap-4">
+                {localImagePreviews.map((preview, index) => (
+                  <div 
+                    key={index} 
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className={`border rounded relative group overflow-hidden bg-gray-100 flex flex-col cursor-move transition ${draggedIndex === index ? 'opacity-50 border-blue-500 border-2' : ''}`}
+                  >
+                    <div className="relative w-full h-32">
+                      <img src={preview} className="object-cover w-full h-full pointer-events-none" alt="Preview" />
+                      {index === 0 && <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow">Primary</span>}
+                    </div>
+                    <div className="bg-white p-2 flex justify-end items-center border-t gap-2">
+                      <button type="button" onClick={() => removeLocalImage(index)} className="text-red-600 font-medium text-xs hover:underline">Remove</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 

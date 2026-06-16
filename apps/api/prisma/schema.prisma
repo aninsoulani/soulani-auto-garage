@@ -27,7 +27,8 @@ enum ListingType {
 }
 
 enum VehicleStatus {
-  AVAILABLE
+  DRAFT
+  ACTIVE
   SOLD
   RENTED
   MAINTENANCE
@@ -153,7 +154,7 @@ model Vehicle {
   chassisNumber   String?           @unique @map("chassis_number")
   engineNumber    String?           @unique @map("engine_number")
   listingType     ListingType       @map("listing_type")
-  status          VehicleStatus     @default(AVAILABLE)
+  status          VehicleStatus     @default(DRAFT)
   isFeatured      Boolean           @default(false) @map("is_featured")
   isNewArrival    Boolean           @default(true) @map("is_new_arrival")
   

@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import * as fs from 'fs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { QueryVehicleDto } from './dto/query-vehicle.dto';
-import { AuditAction } from '@prisma/client';
+import { AuditAction, VehicleStatus } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 
 /** Shared vehicle include shape for public listing */
@@ -65,32 +66,114 @@ export class VehiclesService {
 
   // ─── CRUD ──────────────────────────────────────────────────────────────
 
-  async create(createVehicleDto: CreateVehicleDto, userId: number) {
-    const slug = this.generateSlug(createVehicleDto.make, createVehicleDto.model, createVehicleDto.year);
+  async create(dto: CreateVehicleDto, files: Express.Multer.File[], userId: number) {
+    const {
+      salesPrice, salesPreviousOwners,
+      rentalDailyRate, rentalDepositAmount, rentalIsLongTermEligible,
+      inspectionDate, inspectorName, inspectionEngineStatus, inspectionTransmissionStatus,
+      inspectionSuspensionStatus, inspectionElectricalStatus, inspectionAcStatus,
+      inspectionTiresStatus, inspectionInteriorStatus, inspectionExteriorStatus,
+      inspectionGeneralNotes,
+      ...coreData
+    } = dto;
 
-    const data: any = { ...createVehicleDto };
+    const slug = this.generateSlug(coreData.make, coreData.model, coreData.year);
+    const data: any = { ...coreData };
     if (!data.vin) data.vin = null;
     if (!data.plateNumber) data.plateNumber = null;
     if (!data.chassisNumber) data.chassisNumber = null;
     if (!data.engineNumber) data.engineNumber = null;
 
-    return this.prisma.$transaction(async (tx) => {
-      const vehicle = await tx.vehicle.create({
-        data: { ...data, slug, createdById: userId },
-      });
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const { images, ...prismaData } = data; // Strip frontend images array
+        
+        const vehicle = await tx.vehicle.create({
+          data: { 
+            ...prismaData, 
+            slug, 
+            createdById: userId, 
+            status: data.status || VehicleStatus.ACTIVE,
+            images: files && files.length > 0 ? {
+              create: files.map((file, index) => ({
+                fileUrl: `/uploads/vehicles/${file.filename}`,
+                filePath: file.path,
+                isPrimary: index === 0,
+                sortOrder: index,
+                createdById: userId,
+              }))
+            } : undefined
+          },
+        });
 
-      await tx.auditLog.create({
-        data: {
-          userId,
-          action: AuditAction.CREATE,
-          moduleName: 'Vehicles',
-          recordId: vehicle.id,
-          newValue: JSON.parse(JSON.stringify(vehicle)),
-        },
-      });
+        if (['SALE', 'BOTH'].includes(vehicle.listingType) && salesPrice) {
+          await tx.salesListing.create({
+            data: {
+              vehicleId: vehicle.id,
+              price: salesPrice,
+              previousOwners: salesPreviousOwners || 0,
+              createdById: userId,
+            }
+          });
+        }
 
-      return vehicle;
-    });
+        if (['RENTAL', 'BOTH'].includes(vehicle.listingType) && rentalDailyRate) {
+          await tx.rentalListing.create({
+            data: {
+              vehicleId: vehicle.id,
+              dailyRate: rentalDailyRate,
+              depositAmount: rentalDepositAmount || 0,
+              isLongTermEligible: rentalIsLongTermEligible || false,
+              createdById: userId,
+            }
+          });
+        }
+
+        if (inspectionDate && inspectorName) {
+          await tx.vehicleInspection.create({
+            data: {
+              vehicleId: vehicle.id,
+              inspectionDate: new Date(inspectionDate),
+              inspectorName,
+              engineStatus: inspectionEngineStatus || 'PASS',
+              transmissionStatus: inspectionTransmissionStatus || 'PASS',
+              suspensionStatus: inspectionSuspensionStatus || 'PASS',
+              electricalStatus: inspectionElectricalStatus || 'PASS',
+              acStatus: inspectionAcStatus || 'PASS',
+              tiresStatus: inspectionTiresStatus || 'PASS',
+              interiorStatus: inspectionInteriorStatus || 'PASS',
+              exteriorStatus: inspectionExteriorStatus || 'PASS',
+              generalNotes: inspectionGeneralNotes || '',
+              createdById: userId,
+            }
+          });
+        }
+
+        // Images are handled via nested create in vehicle.create
+
+        await tx.auditLog.create({
+          data: {
+            userId,
+            action: AuditAction.CREATE,
+            moduleName: 'Vehicles',
+            recordId: vehicle.id,
+            newValue: JSON.parse(JSON.stringify(vehicle)),
+          },
+        });
+
+        return vehicle;
+      });
+    } catch (error) {
+      // Clean up uploaded files if the transaction fails
+      if (files && files.length > 0) {
+        files.forEach((file) => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      }
+      throw error;
+    }
   }
 
   async findAll(query: QueryVehicleDto) {
@@ -114,7 +197,11 @@ export class VehiclesService {
 
     const where: any = { deletedAt: null };
 
-    if (status) where.status = status;
+    if (status) {
+      where.status = status;
+    } else {
+      where.status = { in: ['ACTIVE', 'SOLD', 'MAINTENANCE'] };
+    }
     if (listingType) {
       if (listingType === 'SALE' || listingType === 'RENTAL') {
         where.listingType = { in: [listingType, 'BOTH'] };
@@ -238,12 +325,8 @@ export class VehiclesService {
       throw new NotFoundException(`Vehicle with slug "${slug}" not found`);
     }
 
-    // Upsert analytics record so viewCount can be incremented later
-    await this.prisma.vehicleAnalytics.upsert({
-      where: { vehicleId: vehicle.id },
-      create: { vehicleId: vehicle.id },
-      update: {},
-    });
+    // Note: Analytics tracking is now handled asynchronously by the frontend 
+    // calling the POST /analytics/vehicles/:id/track-view endpoint.
 
     return this.enrichImages(vehicle as any);
   }
@@ -252,6 +335,8 @@ export class VehiclesService {
     const existing = await this.findOne(id);
 
     const data: any = { ...updateVehicleDto };
+    
+
     if (data.vin === '') data.vin = null;
     if (data.plateNumber === '') data.plateNumber = null;
     if (data.chassisNumber === '') data.chassisNumber = null;
@@ -272,6 +357,28 @@ export class VehiclesService {
       });
 
       return vehicle;
+    });
+  }
+
+  async publishVehicle(id: number) {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id },
+      include: { images: true, inspections: { where: { deletedAt: null } } }
+    });
+
+    if (!vehicle) throw new NotFoundException(`Vehicle with ID ${id} not found`);
+
+    if (vehicle.images.length < 3) {
+      throw new UnprocessableEntityException('Vehicle must have at least 3 images to be published.');
+    }
+    
+    if (vehicle.inspections.length === 0) {
+      throw new UnprocessableEntityException('Vehicle must have a completed inspection report to be published.');
+    }
+
+    return this.prisma.vehicle.update({
+      where: { id },
+      data: { status: VehicleStatus.ACTIVE }
     });
   }
 

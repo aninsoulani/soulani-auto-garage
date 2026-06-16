@@ -2,13 +2,7 @@
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function InspectionTab({ register, vehicleId, errors }: { register: any, vehicleId: number | null, errors: any }) {
-  if (!vehicleId) {
-    return (
-      <div className="text-gray-500 py-8 text-center italic bg-gray-50 border rounded-lg">
-        Please save the vehicle core details first before adding an inspection.
-      </div>
-    );
-  }
+
 
   const statusOptions = [
     { value: 'PASS', label: 'Pass' },

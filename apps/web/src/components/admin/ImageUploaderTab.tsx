@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import Swal from 'sweetalert2';
+import Image from 'next/image';
+import { VehicleImage } from '@/types/api.types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function ImageUploaderTab({ vehicleId, initialImages = [] }: { vehicleId: string, initialImages: any[] }) {
-  const [images, setImages] = useState(
+export default function ImageUploaderTab({ vehicleId, initialImages = [] }: { vehicleId: string, initialImages: VehicleImage[] }) {
+  const [images, setImages] = useState<VehicleImage[]>(
     [...initialImages].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
   );
   const [uploading, setUploading] = useState(false);
@@ -41,9 +42,9 @@ export default function ImageUploaderTab({ vehicleId, initialImages = [] }: { ve
 
       setImages([...images, ...newImages]);
       Swal.fire({ title: 'Success', text: `${newImages.length} image(s) uploaded successfully!`, icon: 'success', timer: 1500, showConfirmButton: false });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      Swal.fire('Error', err.message, 'error');
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      Swal.fire('Error', errorMsg, 'error');
     } finally {
       setUploading(false);
       e.target.value = ''; // Reset input
@@ -75,8 +76,10 @@ export default function ImageUploaderTab({ vehicleId, initialImages = [] }: { ve
       });
       setImages(images.filter(img => img.id !== imageId));
       Swal.fire('Deleted!', 'Your image has been deleted.', 'success');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch(err: any) { Swal.fire('Error', err.message, 'error'); }
+    } catch(err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      Swal.fire('Error', errorMsg, 'error');
+    }
   }
 
   const handleDragStart = (e: React.DragEvent, imageId: number) => {
@@ -114,8 +117,9 @@ export default function ImageUploaderTab({ vehicleId, initialImages = [] }: { ve
         token: accessToken || undefined,
         body: JSON.stringify({ imageIds: updatedImages.map(img => img.id) })
       });
-    } catch (err: any) {
-      Swal.fire('Error', 'Failed to save new image order: ' + err.message, 'error');
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      Swal.fire('Error', 'Failed to save new image order: ' + errorMsg, 'error');
     }
   };
 
@@ -139,8 +143,14 @@ export default function ImageUploaderTab({ vehicleId, initialImages = [] }: { ve
             onDrop={(e) => handleDrop(e, img.id)}
             className={`border rounded relative group overflow-hidden bg-gray-100 flex flex-col cursor-move transition ${draggedImageId === img.id ? 'opacity-50 border-blue-500 border-2' : ''}`}
           >
-            <div className="relative">
-              <img src={`${getBaseUrl()}${img.fileUrl}`} className="w-full h-32 object-cover pointer-events-none" alt="Vehicle" />
+            <div className="relative w-full h-32">
+              <Image 
+                src={`${getBaseUrl()}${img.fileUrl}`} 
+                fill
+                sizes="(max-width: 768px) 100vw, 25vw"
+                className="object-cover pointer-events-none" 
+                alt="Vehicle" 
+              />
               {index === 0 && <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow">Primary</span>}
             </div>
             <div className="bg-white p-2 flex justify-end items-center border-t gap-2">

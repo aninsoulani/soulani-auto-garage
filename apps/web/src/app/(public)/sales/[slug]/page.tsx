@@ -89,7 +89,7 @@ export default async function VehicleDetailPage({
             '@type': 'Offer',
             price: price.toString(),
             priceCurrency: 'IDR',
-            availability: vehicle.status === 'AVAILABLE'
+            availability: vehicle.status === 'ACTIVE'
               ? 'https://schema.org/InStock'
               : 'https://schema.org/OutOfStock',
           },
@@ -117,6 +117,16 @@ export default async function VehicleDetailPage({
           ]}
         />
 
+        {vehicle.status === 'SOLD' && (
+          <div className="mt-5 w-full bg-gray-900 text-white text-center py-3 font-semibold tracking-wide text-sm rounded-md mb-6">
+            Pemberitahuan: Unit ini telah terjual. Silakan lihat katalog kami untuk unit serupa yang masih tersedia.
+          </div>
+        )}
+        {vehicle.status === 'MAINTENANCE' && (
+          <div className="mt-5 w-full bg-amber-50 border border-amber-200 text-amber-800 text-center py-3 font-semibold tracking-wide text-sm rounded-md mb-6">
+            Pemberitahuan: Unit ini sedang dalam proses perawatan rutin dan inspeksi Berkala. Hubungi kami untuk informasi ketersediaan.
+          </div>
+        )}
         <div className="mt-5 grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Left: Gallery + Details (3/5) */}
           <div className="lg:col-span-3 space-y-6">
@@ -175,13 +185,20 @@ export default async function VehicleDetailPage({
                 <p className="text-sm text-slate-500 mt-0.5">Warna: {vehicle.color}</p>
               )}
             </div>
-            <VehicleCTA
-              vehicleId={vehicle.id}
-              vehicleName={name}
-              listingType={vehicle.listingType as any}
-              price={price ?? null}
-              whatsappUrl={whatsappUrl}
-            />
+            {vehicle.status === 'ACTIVE' ? (
+              <VehicleCTA
+                vehicleId={vehicle.id}
+                vehicleName={name}
+                listingType={vehicle.listingType}
+                price={price ?? null}
+                whatsappUrl={whatsappUrl}
+              />
+            ) : (
+              <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Pendaftaran Ditutup</h3>
+                <p className="text-sm text-gray-500">Unit kendaraan ini sudah tidak tersedia untuk penawaran harga atau sesi tanya jawab.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

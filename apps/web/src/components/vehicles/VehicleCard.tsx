@@ -24,10 +24,15 @@ export default function VehicleCard({ vehicle, variant = 'sale' }: VehicleCardPr
   const priceLabel =
     variant === 'sale' ? formatIDR(price ?? 0) : `${formatIDR(price ?? 0)} / hari`;
 
+  const isUnavailable = vehicle.status === 'SOLD' || vehicle.status === 'MAINTENANCE';
+
   return (
     <Link
       href={href}
-      className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col"
+      className={`group bg-white rounded-2xl border border-slate-100 overflow-hidden transition-all duration-200 flex flex-col ${isUnavailable
+          ? 'opacity-65 grayscale-[40%]'
+          : 'hover:shadow-md hover:-translate-y-1'
+        }`}
     >
       {/* Image */}
       <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
@@ -39,19 +44,26 @@ export default function VehicleCard({ vehicle, variant = 'sale' }: VehicleCardPr
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         {/* Badges overlay */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+        <div className="absolute top-3 left-3 flex flex-row gap-1.5 z-20">
           {vehicle.isFeatured && <VehicleBadge type="featured" />}
           {vehicle.isNewArrival && <VehicleBadge type="new-arrival" />}
           {vehicle.rentalListing?.isLongTermEligible && variant === 'rental' && (
             <VehicleBadge type="long-term" />
           )}
         </div>
-        {/* Status badge (sold/rented) */}
-        {vehicle.status !== 'AVAILABLE' && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="bg-white text-slate-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-              {vehicle.status === 'SOLD' ? 'Terjual' : vehicle.status === 'RENTED' ? 'Disewa' : 'Servis'}
-            </span>
+        {/* Status overlay */}
+        {isUnavailable && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px] z-10">
+            {vehicle.status === 'SOLD' && (
+              <span className="text-white font-black uppercase tracking-widest text-lg border-2 border-white px-4 py-1.5 rounded-sm">
+                TERJUAL
+              </span>
+            )}
+            {vehicle.status === 'MAINTENANCE' && (
+              <span className="text-amber-400 font-black uppercase tracking-widest text-sm text-center border-2 border-amber-400 px-3 py-1.5 rounded-sm">
+                DALAM PERAWATAN
+              </span>
+            )}
           </div>
         )}
       </div>

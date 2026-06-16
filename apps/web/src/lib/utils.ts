@@ -99,7 +99,7 @@ export const LEAD_TYPE_LABELS: Record<string, string> = {
 
 export function getStatusLabel(status: string): { label: string; color: string } {
   const map: Record<string, { label: string; color: string }> = {
-    AVAILABLE: { label: 'Tersedia', color: 'text-emerald-600' },
+    ACTIVE: { label: 'Tersedia', color: 'text-emerald-600' },
     SOLD: { label: 'Terjual', color: 'text-gray-500' },
     RENTED: { label: 'Disewa', color: 'text-blue-600' },
     MAINTENANCE: { label: 'Servis', color: 'text-amber-600' },

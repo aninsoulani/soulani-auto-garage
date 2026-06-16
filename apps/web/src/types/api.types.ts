@@ -7,7 +7,7 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export type ListingType = 'SALE' | 'RENTAL' | 'BOTH';
-export type VehicleStatus = 'AVAILABLE' | 'SOLD' | 'RENTED' | 'MAINTENANCE';
+export type VehicleStatus = 'DRAFT' | 'ACTIVE' | 'SOLD' | 'RENTED' | 'MAINTENANCE';
 export type TransmissionType = 'MANUAL' | 'AUTOMATIC' | 'CVT';
 export type FuelType = 'GASOLINE' | 'DIESEL' | 'HYBRID' | 'ELECTRIC';
 export type CarType = 'SUV' | 'MPV' | 'HATCHBACK' | 'SEDAN' | 'COUPE' | 'CONVERTIBLE' | 'WAGON' | 'PICKUP' | 'VAN' | 'CROSSOVER';
@@ -205,3 +205,12 @@ export interface VehicleQueryParams {
   maxPrice?: number;
   sort?: 'newest' | 'oldest' | 'price:asc' | 'price:desc' | 'year:asc' | 'year:desc' | 'mileage:asc' | 'mileage:desc';
 }
+
+// ─── Dashboard Metrics ────────────────────────────────────────────────────────
+
+export interface DashboardMetrics {
+  totalVehicles: number;
+  activeRentals: number;
+  newLeads: number;
+}
+

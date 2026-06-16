@@ -10,11 +10,26 @@ export class AnalyticsService {
    * Uses upsert so the analytics row is created on first view automatically.
    */
   async trackView(vehicleId: number): Promise<{ success: boolean }> {
-    await this.prisma.vehicleAnalytics.upsert({
-      where: { vehicleId },
-      create: { vehicleId, viewCount: 1 },
-      update: { viewCount: { increment: 1 } },
-    });
+    // Fire and forget to prevent blocking the request cycle
+    (async () => {
+      try {
+        await this.prisma.vehicleAnalytics.upsert({
+          where: { vehicleId },
+          create: { vehicleId, viewCount: 1 },
+          update: { viewCount: { increment: 1 } },
+        });
+      } catch (err: any) {
+        if (err.code === 'P2002') {
+          // If a concurrent request created the record, fallback to update
+          await this.prisma.vehicleAnalytics.update({
+            where: { vehicleId },
+            data: { viewCount: { increment: 1 } },
+          }).catch(e => console.error('Analytics fallback error:', e));
+        } else {
+          console.error('Analytics trackView error:', err);
+        }
+      }
+    })();
 
     return { success: true };
   }
@@ -45,7 +60,7 @@ export class AnalyticsService {
       activeRentals,
       newLeads
     ] = await Promise.all([
-      this.prisma.vehicle.count({ where: { deletedAt: null, status: 'AVAILABLE' } }),
+      this.prisma.vehicle.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
       this.prisma.rentalBooking.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
       this.prisma.lead.count({ where: { deletedAt: null, status: 'NEW' } }),
     ]);

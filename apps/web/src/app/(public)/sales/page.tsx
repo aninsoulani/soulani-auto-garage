@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SlidersHorizontal, ArrowUpDown, X } from 'lucide-react';
 import { getVehicles } from '@/lib/api';
@@ -42,7 +42,7 @@ function filtersToParams(f: FilterState): URLSearchParams {
 
 const PAGE_SIZE = 12;
 
-export default function SalesPage() {
+function SalesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -59,7 +59,6 @@ export default function SalesPage() {
     try {
       const result = await getVehicles({
         listingType: 'SALE',
-        status: 'AVAILABLE',
         search: f.search || undefined,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         carType: (f.carType as any) || undefined,
@@ -76,7 +75,8 @@ export default function SalesPage() {
         page: p,
         limit: PAGE_SIZE,
       });
-      setVehicles(result.data);
+      const validVehicles = result.data.filter((v: Vehicle) => v.status !== 'DRAFT');
+      setVehicles(validVehicles);
       setTotal(result.meta.total);
       setTotalPages(result.meta.totalPages);
     } catch {
@@ -101,6 +101,7 @@ export default function SalesPage() {
 
   const activeFilterCount = [
     filters.search,
+    filters.carType,
     filters.transmission,
     filters.fuelType,
     filters.minPrice,
@@ -108,6 +109,30 @@ export default function SalesPage() {
     filters.isFeatured,
     filters.isNewArrival,
   ].filter(Boolean).length;
+
+  const handleClearFilters = () => {
+    setFilters({
+      search: '',
+      carType: '',
+      transmission: '',
+      fuelType: '',
+      minPrice: '',
+      maxPrice: '',
+      sort: 'newest',
+      isFeatured: false,
+      isNewArrival: false,
+    });
+    setPage(1);
+    router.replace('/sales', { scroll: false });
+  };
+
+  const availableVehicles = vehicles.filter(v => v.status === 'ACTIVE').sort((a, b) => {
+    if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
+    if (a.isNewArrival !== b.isNewArrival) return a.isNewArrival ? -1 : 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const archivedVehicles = vehicles.filter(v => v.status === 'SOLD' || v.status === 'MAINTENANCE');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -184,10 +209,10 @@ export default function SalesPage() {
             </span>
           )}
           <button
-            onClick={() => updateFilters({ search: '', transmission: '', fuelType: '', minPrice: '', maxPrice: '', isFeatured: false, isNewArrival: false })}
-            className="text-xs text-slate-500 hover:text-slate-800 underline"
+            onClick={handleClearFilters}
+            className="text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors duration-200 underline underline-offset-4"
           >
-            Hapus semua filter
+            Hapus Filter
           </button>
         </div>
       )}
@@ -200,13 +225,13 @@ export default function SalesPage() {
 
         {/* Grid */}
         <div className="flex-1 min-w-0">
-          {!loading && vehicles.length === 0 ? (
+          {!loading && availableVehicles.length === 0 && archivedVehicles.length === 0 ? (
             <EmptyState
               title="Tidak ada mobil ditemukan"
               description="Coba ubah filter atau kata kunci pencarian Anda."
               action={
                 <button
-                  onClick={() => updateFilters({ search: '', transmission: '', fuelType: '', minPrice: '', maxPrice: '', isFeatured: false, isNewArrival: false })}
+                  onClick={handleClearFilters}
                   className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   Reset Filter
@@ -214,7 +239,38 @@ export default function SalesPage() {
               }
             />
           ) : (
-            <VehicleGrid vehicles={vehicles} loading={loading} variant="sale" skeletonCount={PAGE_SIZE} />
+            <>
+              {availableVehicles.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">Unit Tersedia</h2>
+                  <VehicleGrid
+                    vehicles={availableVehicles}
+                    loading={loading}
+                    variant="sale"
+                    skeletonCount={PAGE_SIZE}
+                  />
+                </div>
+              )}
+
+              {!loading && archivedVehicles.length > 0 && (
+                <div className="mt-12 mb-6">
+                  <div className="relative my-16">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                      <div className="w-full border-t border-gray-200" />
+                    </div>
+                    <div className="relative flex justify-center text-sm uppercase tracking-widest font-semibold">
+                      <span className="bg-white px-4 text-gray-500">Baru Saja Terjual / Dalam Perawatan</span>
+                    </div>
+                  </div>
+                  <VehicleGrid
+                    vehicles={archivedVehicles}
+                    loading={loading}
+                    variant="sale"
+                    skeletonCount={0}
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {/* Pagination */}
@@ -233,9 +289,8 @@ export default function SalesPage() {
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`w-9 h-9 text-sm font-medium rounded-xl border transition-colors ${
-                      page === pageNum ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 bg-white hover:bg-slate-50'
-                    }`}
+                    className={`w-9 h-9 text-sm font-medium rounded-xl border transition-colors ${page === pageNum ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
                   >
                     {pageNum}
                   </button>
@@ -275,5 +330,13 @@ export default function SalesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SalesPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500 animate-pulse">Memuat kendaraan...</div>}>
+      <SalesContent />
+    </Suspense>
   );
 }
