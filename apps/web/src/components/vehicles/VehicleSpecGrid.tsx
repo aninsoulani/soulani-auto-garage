@@ -17,22 +17,29 @@ export default function VehicleSpecGrid({ vehicle }: VehicleSpecGridProps) {
     {
       icon: Users,
       label: 'Pemilik Sebelumnya',
-      value: vehicle.salesListing ? `${vehicle.salesListing.previousOwners}x` : '-',
+      value: vehicle.salesListing 
+        ? (vehicle.salesListing.previousOwners === 0 ? 'Tangan Pertama' : `${vehicle.salesListing.previousOwners}x`)
+        : '-',
+      isStrikethrough: vehicle.salesListing ? vehicle.salesListing.previousOwners === 0 : false,
     },
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-      {specs.map(({ icon: Icon, label, value }) => (
+      {specs.map(({ icon: Icon, label, value, isStrikethrough }) => (
         <div
           key={label}
           className="flex flex-col gap-1.5 p-4 bg-slate-50 rounded-xl border border-slate-100"
         >
           <div className="flex items-center gap-1.5 text-slate-400">
             <Icon size={14} />
-            <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+            <span className={`text-xs font-medium uppercase tracking-wide ${isStrikethrough ? 'line-through opacity-70' : ''}`}>
+              {label}
+            </span>
           </div>
-          <span className="text-slate-900 font-semibold text-sm leading-snug">{value}</span>
+          <span className={`font-semibold text-sm leading-snug ${isStrikethrough ? 'text-green-600' : 'text-slate-900'}`}>
+            {value}
+          </span>
         </div>
       ))}
     </div>
