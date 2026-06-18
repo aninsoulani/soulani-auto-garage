@@ -36,3 +36,9 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# User Uploads
+apps/api/uploads/
+
+# Personal Documentation
+docs/
