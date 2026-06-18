@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,19 @@ export class AuthService {
     return this.prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, uuid: true, name: true, email: true, role: true, createdAt: true },
+    });
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    const data: any = {};
+    if (dto.name) data.name = dto.name;
+    if (dto.password) {
+      data.passwordHash = await bcrypt.hash(dto.password, 12);
+    }
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+      select: { id: true, name: true, email: true, role: true }
     });
   }
 }

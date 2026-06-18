@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Request, UseI
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { Throttle, SkipThrottle } from '@nestjs/throttler';
+
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -13,7 +13,7 @@ import { Public } from '../common/decorators/public.decorator';
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
-  @SkipThrottle()
+
   @Post()
   @UseInterceptors(FilesInterceptor('files', 10, {
     storage: diskStorage({
@@ -53,14 +53,14 @@ export class VehiclesController {
   }
 
   @Public()
-  @Throttle({ short: { limit: 1000, ttl: 60000 }, medium: { limit: 10000, ttl: 3600000 } })
+
   @Get()
   findAllPublic(@Query() query: QueryVehicleDto) {
     // Rely on service to filter out DRAFT instead of hardcoding ACTIVE
     return this.vehiclesService.findAll(query);
   }
 
-  @SkipThrottle()
+
   @Get('admin/list')
   findAdminAll(@Query() query: QueryVehicleDto) {
     return this.vehiclesService.findAll(query);
@@ -72,32 +72,32 @@ export class VehiclesController {
    * the literal segment "by-slug" is not mistakenly parsed as a numeric ID.
    */
   @Public()
-  @Throttle({ short: { limit: 1000, ttl: 60000 }, medium: { limit: 10000, ttl: 3600000 } })
+
   @Get('by-slug/:slug')
   findBySlug(@Param('slug') slug: string) {
     return this.vehiclesService.findBySlug(slug);
   }
 
   @Public()
-  @Throttle({ short: { limit: 1000, ttl: 60000 }, medium: { limit: 10000, ttl: 3600000 } })
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.vehiclesService.findOne(+id);
   }
 
-  @SkipThrottle()
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateVehicleDto: UpdateVehicleDto, @Request() req) {
     return this.vehiclesService.update(+id, updateVehicleDto, req.user.id);
   }
 
-  @SkipThrottle()
+
   @Patch(':id/publish')
   publish(@Param('id') id: string) {
     return this.vehiclesService.publishVehicle(+id);
   }
 
-  @SkipThrottle()
+
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
     return this.vehiclesService.remove(+id, req.user.id);

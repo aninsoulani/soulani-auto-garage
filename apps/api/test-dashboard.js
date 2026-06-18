@@ -1,1 +1,0 @@
-const jwt = require('jsonwebtoken'); const token = jwt.sign({ sub: 1, email: 'admin@soulani.com', role: 'SUPER_ADMIN' }, process.env.JWT_SECRET || 'fallback-secret-for-dev', { expiresIn: '1h' }); fetch('http://localhost:3001/api/v1/analytics/dashboard', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json()).then(console.log);

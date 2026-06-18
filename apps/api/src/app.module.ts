@@ -24,16 +24,19 @@ import { RentalBookingsModule } from './rental-bookings/rental-bookings.module';
     ConfigModule.forRoot({ isGlobal: true }),
 
     /**
-     * Rate limiting via @nestjs/throttler.
-     * Two named tiers are configured:
-     *   short  — 10 requests / IP / 60s   (view tracking)
-     *   medium — 5 requests / IP / 3600s  (lead/booking submission)
-     * Individual endpoints override these values via @Throttle() decorator.
+     * Rate limiting via @nestjs/throttler using centralized config.
      */
-    ThrottlerModule.forRoot([
-      { name: 'short', ttl: 60000, limit: 10 },
-      { name: 'medium', ttl: 3600000, limit: 5 },
-    ]),
+    ThrottlerModule.forRootAsync({
+      useFactory: () => {
+        const { getThrottlerConfig } = require('./config/throttler.config');
+        const config = getThrottlerConfig();
+        return [{
+          name: 'default',
+          ttl: config.global.ttl,
+          limit: config.global.limit,
+        }];
+      },
+    }),
 
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),

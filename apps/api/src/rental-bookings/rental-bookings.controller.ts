@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Param, Patch, Query, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
-import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { getThrottlerConfig } from '../config/throttler.config';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -20,7 +21,7 @@ export class RentalBookingsController {
   constructor(private readonly bookingsService: RentalBookingsService) {}
 
   @Public()
-  @Throttle({ short: { limit: 10, ttl: 60000 }, medium: { limit: 50, ttl: 3600000 } })
+  @Throttle({ default: getThrottlerConfig().mutate })
   @Post()
   create(@Body() createDto: CreateRentalBookingDto, @Request() req) {
     // Optionally capture user.id if logged in, else null for guest checkout
@@ -28,26 +29,26 @@ export class RentalBookingsController {
     return this.bookingsService.create(createDto, userId);
   }
 
-  @SkipThrottle()
+
   @Get()
   findAll(@Query() query: QueryRentalBookingDto) {
     return this.bookingsService.findAll(query);
   }
 
-  @SkipThrottle()
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.bookingsService.findOne(+id);
   }
 
-  @SkipThrottle()
+
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() updateDto: UpdateRentalBookingStatusDto, @Request() req) {
     return this.bookingsService.updateStatus(+id, updateDto, req.user.id);
   }
 
   @Public() // Allow guests to upload receipts
-  @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
+  @Throttle({ default: getThrottlerConfig().mutate })
   @Post(':id/receipt')
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({

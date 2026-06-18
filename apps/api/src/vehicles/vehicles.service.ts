@@ -334,9 +334,18 @@ export class VehiclesService {
   async update(id: number, updateVehicleDto: UpdateVehicleDto, userId: number) {
     const existing = await this.findOne(id);
 
-    const data: any = { ...updateVehicleDto };
-    
+    const {
+      salesPrice, salesPreviousOwners,
+      rentalDailyRate, rentalDepositAmount, rentalIsLongTermEligible,
+      inspectionDate, inspectorName, inspectionEngineStatus, inspectionTransmissionStatus,
+      inspectionSuspensionStatus, inspectionElectricalStatus, inspectionAcStatus,
+      inspectionTiresStatus, inspectionInteriorStatus, inspectionExteriorStatus,
+      inspectionGeneralNotes,
+      ...coreData
+    } = updateVehicleDto as any;
 
+    const data: any = { ...coreData };
+    
     if (data.vin === '') data.vin = null;
     if (data.plateNumber === '') data.plateNumber = null;
     if (data.chassisNumber === '') data.chassisNumber = null;
@@ -344,6 +353,66 @@ export class VehiclesService {
 
     return this.prisma.$transaction(async (tx) => {
       const vehicle = await tx.vehicle.update({ where: { id }, data });
+
+      if (['SALE', 'BOTH'].includes(vehicle.listingType) && salesPrice !== undefined) {
+        await tx.salesListing.upsert({
+          where: { vehicleId: id },
+          update: { price: salesPrice, previousOwners: salesPreviousOwners || 0 },
+          create: { vehicleId: id, price: salesPrice, previousOwners: salesPreviousOwners || 0, createdById: userId }
+        });
+      }
+
+      if (['RENTAL', 'BOTH'].includes(vehicle.listingType) && rentalDailyRate !== undefined) {
+        await tx.rentalListing.upsert({
+          where: { vehicleId: id },
+          update: { dailyRate: rentalDailyRate, depositAmount: rentalDepositAmount || 0, isLongTermEligible: rentalIsLongTermEligible || false },
+          create: { vehicleId: id, dailyRate: rentalDailyRate, depositAmount: rentalDepositAmount || 0, isLongTermEligible: rentalIsLongTermEligible || false, createdById: userId }
+        });
+      }
+
+      if (inspectionDate && inspectorName) {
+        const latestInspection = await tx.vehicleInspection.findFirst({
+          where: { vehicleId: id, deletedAt: null },
+          orderBy: { inspectionDate: 'desc' }
+        });
+
+        if (latestInspection) {
+          await tx.vehicleInspection.update({
+            where: { id: latestInspection.id },
+            data: {
+              inspectionDate: new Date(inspectionDate),
+              inspectorName,
+              engineStatus: inspectionEngineStatus || 'PASS',
+              transmissionStatus: inspectionTransmissionStatus || 'PASS',
+              suspensionStatus: inspectionSuspensionStatus || 'PASS',
+              electricalStatus: inspectionElectricalStatus || 'PASS',
+              acStatus: inspectionAcStatus || 'PASS',
+              tiresStatus: inspectionTiresStatus || 'PASS',
+              interiorStatus: inspectionInteriorStatus || 'PASS',
+              exteriorStatus: inspectionExteriorStatus || 'PASS',
+              generalNotes: inspectionGeneralNotes || '',
+            }
+          });
+        } else {
+          await tx.vehicleInspection.create({
+            data: {
+              vehicleId: id,
+              inspectionDate: new Date(inspectionDate),
+              inspectorName,
+              engineStatus: inspectionEngineStatus || 'PASS',
+              transmissionStatus: inspectionTransmissionStatus || 'PASS',
+              suspensionStatus: inspectionSuspensionStatus || 'PASS',
+              electricalStatus: inspectionElectricalStatus || 'PASS',
+              acStatus: inspectionAcStatus || 'PASS',
+              tiresStatus: inspectionTiresStatus || 'PASS',
+              interiorStatus: inspectionInteriorStatus || 'PASS',
+              exteriorStatus: inspectionExteriorStatus || 'PASS',
+              generalNotes: inspectionGeneralNotes || '',
+              createdById: userId,
+            }
+          });
+        }
+      }
 
       await tx.auditLog.create({
         data: {

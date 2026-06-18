@@ -5,21 +5,28 @@ const prisma = new PrismaClient();
 
 async function main() {
   // ─── Admin User ───────────────────────────────────────────────────────────
-  const passwordHash = await bcrypt.hash('Admin@Soulani123!', 12);
+  const adminEmail = process.env.DEFAULT_ADMIN_EMAIL;
+  const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error('DEFAULT_ADMIN_EMAIL and DEFAULT_ADMIN_PASSWORD must be set in the .env file!');
+  }
+
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   await prisma.user.upsert({
-    where: { email: 'admin@soulani.com' },
-    update: {},
+    where: { email: adminEmail },
+    update: { passwordHash },
     create: {
       name: 'Super Admin',
-      email: 'admin@soulani.com',
+      email: adminEmail,
       passwordHash,
       role: 'SUPER_ADMIN',
       isActive: true,
     },
   });
 
-  console.log('✓ Admin user: admin@soulani.com');
+  console.log(`✓ Admin user: ${adminEmail}`);
 
   // ─── Testimonials ─────────────────────────────────────────────────────────
   // Phase 3: Seeded with static defaults.

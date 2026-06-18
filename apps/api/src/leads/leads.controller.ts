@@ -5,6 +5,8 @@ import { CreateLeadDto } from './dto/create-lead.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
+import { getThrottlerConfig } from '../config/throttler.config';
+
 @Controller('leads')
 export class LeadsController {
   constructor(private readonly leadsService: LeadsService) { }
@@ -15,7 +17,7 @@ export class LeadsController {
    * Returns leadReferenceId + whatsappRedirectUrl.
    */
   @Public()
-  @Throttle({ medium: { ttl: 3600000, limit: 10 } })
+  @Throttle({ default: getThrottlerConfig().mutate })
   @Post()
   create(@Body() dto: CreateLeadDto) {
     return this.leadsService.create(dto);
