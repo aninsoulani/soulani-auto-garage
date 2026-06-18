@@ -22,7 +22,9 @@ The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (
 - **Inspections Module:** A dedicated tab for logging detailed vehicle inspection statuses across Engine, Transmission, Suspension, Electrical, A/C, and more.
 - **Leads Module:** Robust API for tracking customer inquiries and auto-generating Reference IDs (e.g. `LD-2026-XYZ12`), with WhatsApp redirect URL builder.
 - **Analytics & Dashboard:** Global Admin Dashboard providing live metrics mapping and inventory distributions. Tracks simple view metrics.
-- **Audit & Security:** Automated background tracking of core events. Global rate limiting (`@nestjs/throttler`) to protect public endpoints.
+- **Admin Profile Management:** Integrated user profile editing (name and secure password changes) featuring real-time UI synchronization and strict Zod frontend validation.
+- **DevSecOps Rate Limiting:** Centralized, environment-aware `@nestjs/throttler` architecture featuring strict limiters for authentication (`auth`) and data mutations (`mutate`) to prevent brute-force attacks, scaling dynamically during local development.
+- **Audit & Security:** Automated background tracking of core events. Global exception filters that cleanly catch API errors (including `429 Too Many Requests`) and bubble them seamlessly to the UI.
 
 ## 🛠️ Getting Started
 
@@ -44,6 +46,10 @@ The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (
    DATABASE_URL="mysql://user:password@localhost:3306/soulani_garage"
    JWT_SECRET="your-super-secret-key"
    WHATSAPP_NUMBER="6281210663530"
+   
+   # Setup your Admin Credentials before running db seed!
+   DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
+   DEFAULT_ADMIN_PASSWORD="StrongPassword123"
    
    # Web Example
    NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"

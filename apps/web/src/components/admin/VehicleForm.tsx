@@ -1,5 +1,5 @@
-﻿'use client';
-import { useState } from 'react';
+'use client';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -59,14 +59,20 @@ const baseSchema = z.object({
 });
 
 const getVehicleSchema = (isEditMode: boolean) => baseSchema.superRefine((data, ctx) => {
-  if (['SALE', 'BOTH'].includes(data.listingType)) {
+  if (data.listingType === 'SALE') {
     if (!data.salesPrice || data.salesPrice <= 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Sales price is required for vehicles listed for sale.', path: ['salesPrice'] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Sales price is required and must be greater than 0.', path: ['salesPrice'] });
     }
-  }
-  if (['RENTAL', 'BOTH'].includes(data.listingType)) {
+  } else if (data.listingType === 'RENTAL') {
     if (!data.rentalDailyRate || data.rentalDailyRate <= 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Rental price is required for rental vehicles.', path: ['rentalDailyRate'] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Rental daily rate is required and must be greater than 0.', path: ['rentalDailyRate'] });
+    }
+  } else if (data.listingType === 'BOTH') {
+    if (!data.salesPrice || data.salesPrice <= 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Sales price is required and must be greater than 0.', path: ['salesPrice'] });
+    }
+    if (!data.rentalDailyRate || data.rentalDailyRate <= 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Rental daily rate is required and must be greater than 0.', path: ['rentalDailyRate'] });
     }
   }
 
@@ -167,10 +173,10 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
       isNewArrival: initialData?.isNewArrival ?? true,
       description: initialData?.description || '',
 
-      salesPrice: initialData?.salesListing?.price || 0,
-      salesPreviousOwners: initialData?.salesListing?.previousOwners || 0,
-      rentalDailyRate: initialData?.rentalListing?.dailyRate || 0,
-      rentalDepositAmount: initialData?.rentalListing?.depositAmount || 0,
+      salesPrice: initialData?.salesListing?.price ? Number(initialData.salesListing.price) : 0,
+      salesPreviousOwners: initialData?.salesListing?.previousOwners ? Number(initialData.salesListing.previousOwners) : 0,
+      rentalDailyRate: initialData?.rentalListing?.dailyRate ? Number(initialData.rentalListing.dailyRate) : 0,
+      rentalDepositAmount: initialData?.rentalListing?.depositAmount ? Number(initialData.rentalListing.depositAmount) : 0,
       rentalIsLongTermEligible: initialData?.rentalListing?.isLongTermEligible || false,
 
       inspectionDate: initialData?.inspections?.[0]?.inspectionDate ? new Date(initialData.inspections[0].inspectionDate).toISOString().split('T')[0] : '',
@@ -187,9 +193,22 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
     }
   });
 
-  const { handleSubmit, watch, control, setValue, formState: { errors, isSubmitting } } = form;
+  const { handleSubmit, watch, control, setValue, clearErrors, formState: { errors, isSubmitting } } = form;
 
   const currentListingType = watch('listingType');
+
+  useEffect(() => {
+    if (currentListingType === 'SALE') {
+      setValue('rentalDailyRate', 0);
+      setValue('rentalDepositAmount', 0);
+      setValue('rentalIsLongTermEligible', false);
+      clearErrors(['rentalDailyRate', 'rentalDepositAmount', 'rentalIsLongTermEligible']);
+    } else if (currentListingType === 'RENTAL') {
+      setValue('salesPrice', 0);
+      setValue('salesPreviousOwners', 0);
+      clearErrors(['salesPrice', 'salesPreviousOwners']);
+    }
+  }, [currentListingType, setValue, clearErrors]);
 
   const onSubmit = async (data: VehicleFormValues) => {
     try {
