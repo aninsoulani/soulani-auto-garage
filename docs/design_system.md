@@ -1,147 +1,141 @@
-# Design System: Soulani Auto Garage
+# Design System & UI Specifications
+# Soulani Auto Garage
 
-> [!NOTE]
-> This document defines the revised Design System for Soulani Auto Garage. Aligned with our positioning as a "Modern Automotive Marketplace," this system moves away from ultra-luxury, editorial aesthetics in favor of a bright, accessible, trustworthy, and SaaS-inspired visual language. Influences include *Carsome*, *Carro*, *Airbnb*, and *Stripe*.
-
----
-
-## 1. Color Palette
-The color palette is designed to instill absolute trust, clarity, and friendliness. We use a vibrant primary color alongside a highly structured grayscale.
-
-*   **Primary Brand (Action Blue):** `#2563EB` (Used for primary CTAs, links, and active states. Conveys trust and tech-forward efficiency.)
-*   **Secondary/Accent (Amber):** `#F59E0B` (Used sparingly for "Hot Deal" tags or attention-grabbing badges.)
-*   **Background (Light):** `Pure White #FFFFFF` (Cards, Modals) / `Light Gray #F9FAFB` (App Background, alternating sections).
-*   **Text Primary:** `Slate #0F172A` (For headings and high-contrast readable body text).
-*   **Text Secondary:** `Slate #64748B` (For subtitles, meta-data, and input placeholders).
-*   **Success:** `Emerald #10B981` (For "Passed Inspection" badges, verified ticks).
-*   **Error:** `Rose #F43F5E` (For form validation errors).
-*   **Borders & Dividers:** `Slate #E2E8F0`
-
-## 2. Typography
-Typography must prioritize absolute legibility, data clarity, and a friendly, modern digital feel. Serifs are removed completely.
-
-*   **Primary Font Family:** `Inter`, `Plus Jakarta Sans`, or `Roboto`.
-*   **Headings:** Bold (`700`) or Semi-Bold (`600`). Tight line-height (`1.2`) for strong structural hierarchy.
-*   **Body & Data:** Regular (`400`) or Medium (`500`). Open line-height (`1.5`) for readable paragraphs.
-*   **Pricing:** Always heavily weighted (`700` or `800`) to stand out instantly.
-
-## 3. Layout System
-A highly structured, data-clear grid inspired by modern SaaS platforms. Space is used to organize data, not just for "editorial breathing room."
-
-*   **Grid:** 12-column grid.
-*   **Max Width:** `1280px` container for a focused, readable view on large screens.
-*   **Spacing Scale:** Standard 8pt scale (`8`, `16`, `24`, `32`, `48`, `64`). Information density is comfortable but compact.
-*   **Border Radius:** Friendly and approachable. `8px` (`lg`) for cards, buttons, and inputs. `9999px` (`full`) for badges and avatars.
-
-## 4. Component System
-Components are designed for clarity and rapid scanning by users of all age groups.
-
-*   **Badges:** Pill-shaped, clear background colors with bold text. (e.g., Green for "150-Point Inspected", Amber for "Great Price").
-*   **Inputs:** Solid light-gray borders (`1px solid #E2E8F0`), rounding of `8px`. Focus states feature a clear 2px `Action Blue` ring to ensure accessibility.
-*   **Navigation:** Sticky top nav with a clear logo, a highly visible search bar embedded directly in the nav, and a solid primary CTA for "Log In" or "Contact Us".
-
-## 5. Homepage Structure
-The homepage is a conversion engine, prioritizing search and trust immediately.
-
-1.  **Search-First Hero:** A clean, friendly headline with a prominent search bar and quick-filter buttons (e.g., "Under 200 Juta", "Family SUVs") overlaid on a bright, relatable lifestyle image.
-2.  **Quick Categories:** Large, friendly icons for fast filtering by body type (Hatchback, MPV, SUV).
-3.  **Trust Banner:** A horizontal strip highlighting core guarantees: "150-Point Inspection | 5-Day Money Back | 1-Year Warranty."
-4.  **Featured Inventory:** A grid of vehicle cards sorted by algorithm or new arrivals.
-5.  **Testimonials:** Clean, verifiable review cards with star ratings (5/5) and customer photos.
-
-## 6. Vehicle Card Design
-The Vehicle Card is the most critical component. It must be data-rich but visually clean.
-
-*   **Image:** 4:3 aspect ratio. Clean background or bright environment. "150-Point Inspected" badge floating in the top left corner.
-*   **Header:** Make, Model, and Trim (Bold `Slate #0F172A`).
-*   **Meta Data Row:** Year • Mileage • Transmission (Small, `Slate #64748B`, separated by subtle bullets).
-*   **Pricing:** Prominent total price. Below it, a smaller text line indicating estimated monthly installments (e.g., "Est. Rp 3.5jt/mo").
-*   **Container:** `White` background, `1px solid #E2E8F0` border, `8px` border radius. On hover, the card lifts slightly (`-translate-y-1`) and gains a soft shadow (`shadow-md`).
-
-## 7. CTA Design
-Buttons must look like buttons—approachable, obvious, and satisfying to click.
-
-*   **Primary CTA:** Solid `Action Blue` background, `White` text. `8px` border radius.
-*   **Secondary CTA:** Outline style with `Action Blue` border and text, transparent background.
-*   **WhatsApp CTA:** Floating button (bottom right) in WhatsApp Green (`#25D366`) with a clear label on desktop ("Chat with Us") and just the icon on mobile. 
-*   **Hover States:** Slight background darken or a `-1px` Y-axis translate with increased shadow. Active states compress slightly (`scale: 0.98`).
-
-## 8. Motion System
-Motion is snappy, responsive, and delightful. It provides immediate feedback without wasting the user's time.
-
-*   **Animation Duration:** Fast. `150ms` for hovers and micro-interactions, `300ms` for modals/drawers.
-*   **Easing Curves:** `ease-out` (`cubic-bezier(0, 0, 0.2, 1)`) for objects entering the screen (feels fast and natural).
-*   **Micro-interactions:** Skeleton loaders sweep quickly. Success states (like booking confirmed) feature a delightful bounce-in checkmark.
-
-## 9. Mobile UX
-Mobile is not just an afterthought; it is the primary way everyday users browse.
-
-*   **Thumb-Friendly Navigation:** Bottom sticky navigation bar for core actions (Home, Search, Saved, WhatsApp).
-*   **Tap Targets:** Minimum `44x44px` for all clickable elements to accommodate all users comfortably.
-*   **VDP (Vehicle Detail Page):** Image carousels are easily swipeable with pagination dots.
-*   **Sticky Action Bar:** The bottom of the VDP always has a sticky bar with the Price and a primary "Book Test Drive" or "Chat Now" button.
+**Version:** 2.0.0
+**Implementation:** Tailwind CSS v4 + Shadcn UI (Style: `base-vega`, Base Color: `stone`)
 
 ---
 
-## 10. Design Tokens (Implementation-Ready)
+## 1. Design Philosophy
 
-These tokens map directly to modern utility frameworks like Tailwind CSS.
+Soulani Auto Garage employs a clean, data-dense, and highly trustworthy UI. It strikes a balance between a modern tech platform (like Stripe or Linear) and an accessible consumer application. We avoid dark, moody "luxury" tropes in favor of bright, honest, and scannable interfaces.
 
-```json
-{
-  "colors": {
-    "primary": {
-      "DEFAULT": "#2563EB",
-      "hover": "#1D4ED8",
-      "light": "#EFF6FF"
-    },
-    "background": {
-      "default": "#F9FAFB",
-      "paper": "#FFFFFF"
-    },
-    "text": {
-      "primary": "#0F172A",
-      "secondary": "#64748B",
-      "tertiary": "#94A3B8"
-    },
-    "status": {
-      "success": "#10B981",
-      "warning": "#F59E0B",
-      "error": "#F43F5E",
-      "whatsapp": "#25D366"
-    },
-    "border": {
-      "DEFAULT": "#E2E8F0",
-      "focus": "#93C5FD"
-    }
-  },
-  "typography": {
-    "fontFamily": {
-      "sans": ["Inter", "Plus Jakarta Sans", "Roboto", "sans-serif"]
-    },
-    "fontWeight": {
-      "regular": "400",
-      "medium": "500",
-      "semibold": "600",
-      "bold": "700"
-    }
-  },
-  "borderRadius": {
-    "sm": "4px",
-    "md": "6px",
-    "lg": "8px",
-    "xl": "12px",
-    "full": "9999px"
-  },
-  "boxShadow": {
-    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-    "DEFAULT": "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
-    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
-    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)"
-  },
-  "transitionDuration": {
-    "fast": "150ms",
-    "normal": "300ms"
-  }
-}
-```
+### Core Principles
+1. **Absolute Clarity:** Information must be immediately scannable. Use tables, grids, and clear visual hierarchy.
+2. **Honesty in Design:** Never hide the true price. Show inspection results clearly, both positive and negative.
+3. **Snappy Feedback:** Interactions (filtering, submitting) should feel instantaneous with bouncy, 150-300ms transitions.
+4. **Indonesian Context:** The public interface is entirely in Bahasa Indonesia. Design must accommodate longer Indonesian words and specific currency formats (e.g., `Rp 850.000.000`).
+
+---
+
+## 2. Typography System
+
+We use a multi-font system imported via `next/font/google` for optimal performance.
+
+| Variable | Font Family | Usage | Characteristics |
+|---|---|---|---|
+| `--font-heading` | **Figtree** | Page titles, section headers, hero text | Geometric, friendly, bold, modern. |
+| `--font-sans` | **Instrument Sans** | Primary body text, UI labels, form inputs | Clean, highly legible at small sizes. |
+| `--font-jakarta-sans` | **Plus Jakarta Sans** | Secondary/Data-dense contexts | Available as an alternative sans-serif. |
+| `--font-jetbrains-mono`| **JetBrains Mono** | Code, IDs, technical specs in admin | Clear distinction between similar characters. |
+
+**Scale Configuration (Tailwind Defaults):**
+- `text-xs`: 0.75rem (12px) — Badges, microcopy.
+- `text-sm`: 0.875rem (14px) — Standard UI labels, secondary text.
+- `text-base`: 1rem (16px) — Standard body text.
+- `text-lg`: 1.125rem (18px) — Subheadings.
+- `text-2xl`: 1.5rem (24px) — Section headers.
+- `text-3xl`: 1.875rem (30px) — Major titles.
+- `text-5xl`: 3rem (48px) — Hero titles.
+
+---
+
+## 3. Color Palette (OKLCH Space)
+
+Soulani uses modern `oklch()` color definitions mapped to CSS variables for dynamic theming (including a supported `.dark` mode).
+
+### Base Brand Colors
+- **Primary (Action Blue):** `oklch(0.488 0.243 264.376)` — Approx `#2563EB`. Used for primary buttons, links, and major active states.
+- **Primary Foreground:** `oklch(0.97 0.014 254.604)` — White/Off-white for text on primary backgrounds.
+- **WhatsApp Green:** `#25D366` — Used exclusively for WhatsApp CTA buttons.
+
+### Light Theme Tokens (`:root`)
+- **Background:** `oklch(1 0 0)` (White) — Used for main app background (`bg-[#F9FAFB]` often used for layout wrapper).
+- **Foreground:** `oklch(0.147 0.004 49.25)` (Slate 900) — Primary text color.
+- **Card / Popover:** `oklch(1 0 0)` (White)
+- **Muted:** `oklch(0.97 0.001 106.424)` — For disabled states and subtle backgrounds.
+- **Border / Input:** `oklch(0.923 0.003 48.717)` — Soft slate borders.
+- **Destructive:** `oklch(0.577 0.245 27.325)` — Red for errors and delete actions.
+
+### Dark Theme Tokens (`.dark`)
+Dark mode is fully supported via the `.dark` class, inverting backgrounds to deep slates and lightening foregrounds, while adjusting the primary blue for better contrast (`oklch(0.424 0.199 265.638)`).
+
+---
+
+## 4. Radii and Elevation
+
+- **Global Radius:** `--radius: 0.45rem;`
+  - *Derived scales:* `radius-sm` (0.6x), `radius-md` (0.8x), `radius-lg` (1x), `radius-xl` (1.4x), `radius-2xl` (1.8x), `radius-3xl` (2.2x).
+- **Elevation (Shadows):**
+  - Use Tailwind's default `shadow-sm` for cards, inputs, and standard panels.
+  - Use `shadow-md` for hover states on clickable cards.
+  - Use `shadow-lg` for dropdowns, popovers, and sticky bottom bars.
+
+---
+
+## 5. UI Component Library
+
+We utilize **Shadcn UI** installed via the CLI (`components.json`).
+- **Style:** `base-vega`
+- **Base Color:** `stone`
+- **CSS Variable Strategy:** Extensive use of CSS variables defined in `src/app/globals.css`.
+
+### Common Components
+
+#### Buttons
+- **Primary:** Action Blue background, white text. Bouncy hover effect. Used for main CTA (e.g., "Kirim Pertanyaan").
+- **Outline:** Transparent background, slate border, slate text. Used for secondary actions (e.g., "Filter").
+- **Ghost:** No background or border until hover. Used for tertiary actions.
+- **WhatsApp:** Specific green (`#25D366`) variant, often paired with the `MessageCircle` icon.
+
+#### Form Elements (Inputs, Selects, Textareas)
+- `bg-white`, soft slate border (`border-border`), standard focus ring (`outline-ring/50`).
+- Error states explicitly styled with `text-rose-500` labels and borders.
+
+#### Vehicle Badges
+Defined centrally in `VehicleBadge.tsx` to maintain consistency:
+- **Featured ("Pilihan Terbaik"):** Red background, white text, uppercase, extra small.
+- **New Arrival ("Unit Terbaru"):** Sky blue background, white text.
+- **Inspected ("150-Titik Inspeksi"):** Emerald green background, white text.
+- **Maintenance/Sold:** Contextual banners (amber/gray) rather than inline pills.
+
+---
+
+## 6. Layout & Grid System
+
+- **Max Width:** `max-w-7xl` (1280px) for standard page content.
+- **Responsive Breakpoints (Tailwind Defaults):**
+  - `sm`: 640px
+  - `md`: 768px
+  - `lg`: 1024px (Desktop threshold)
+  - `xl`: 1280px
+- **Grid Strategy:**
+  - Vehicle Listing: 1 col (mobile) → 2 cols (`sm`) → 3 cols (`md`) → 4 cols (`xl`).
+  - VDP Detail Layout: Stacked (mobile) → 5-column CSS grid (`lg:grid-cols-5`) where Gallery takes 3 columns and CTA takes 2 columns.
+
+---
+
+## 7. Motion & Animation
+
+- Powered by `tw-animate-css` imported in `globals.css`.
+- **Transitions:** Use `transition-all duration-200` on interactive elements (buttons, cards).
+- **Loading States:** Use the `animate-pulse` skeleton loader pattern (e.g., `SkeletonCard.tsx`) to prevent layout shifts.
+- **Modals/Sheets:** Must slide in from the bottom (mobile) or fade in (desktop) rapidly.
+
+---
+
+## 8. Specific UI Patterns
+
+### The "WhatsApp FAB" Pattern
+A floating action button (FAB) is persistently available on the bottom right of all public pages, allowing instant access to customer support.
+
+### The Sticky CTA Pattern
+On mobile Vehicle Detail Pages, the primary action (Price + "Kirim Pertanyaan" + WA icon) is fixed to the bottom of the viewport (`fixed bottom-0 z-40 bg-white shadow-lg`). On desktop, it is a sticky sidebar card (`sticky top-24`).
+
+### Active Filter Chips
+When users apply filters on the Sales page, small visual "chips" (e.g., "Otomatis ✕", "Bensin ✕") appear below the search bar, allowing easy removal of individual filters without opening the main filter drawer.
+
+### Formatting Data
+- **Currency:** Always format IDR using `Intl.NumberFormat('id-ID')` with the `Rp` prefix implicitly or explicitly handled by the utility function.
+- **Mileage:** Format as `XX.XXX km`.
+- **Empty States:** Clear, friendly empty states with an illustration or icon, a helpful message, and a CTA to reset filters.

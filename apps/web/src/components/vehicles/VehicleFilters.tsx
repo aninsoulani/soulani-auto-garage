@@ -1,4 +1,7 @@
 import type { TransmissionType, FuelType } from '@/types/api.types';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export interface FilterState {
   search: string;
@@ -23,23 +26,27 @@ export default function VehicleFilters({ filters, onChange }: VehicleFiltersProp
       {/* Car Type */}
       <div>
         <p className="font-semibold text-slate-800 mb-2">Tipe Mobil</p>
-        <select
-          value={filters.carType}
-          onChange={(e) => onChange({ carType: e.target.value })}
-          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white outline-none focus:border-blue-500"
+        <Select 
+          value={filters.carType || "all"} 
+          onValueChange={(val) => onChange({ carType: val === "all" ? "" : (val || undefined) })}
         >
-          <option value="">Semua Tipe</option>
-          <option value="SUV">SUV</option>
-          <option value="MPV">MPV</option>
-          <option value="HATCHBACK">Hatchback</option>
-          <option value="SEDAN">Sedan</option>
-          <option value="COUPE">Coupe</option>
-          <option value="CONVERTIBLE">Convertible</option>
-          <option value="WAGON">Wagon</option>
-          <option value="PICKUP">Pickup</option>
-          <option value="VAN">Van</option>
-          <option value="CROSSOVER">Crossover</option>
-        </select>
+          <SelectTrigger className="w-full bg-white">
+            <SelectValue placeholder="Semua Tipe" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Tipe</SelectItem>
+            <SelectItem value="SUV">SUV</SelectItem>
+            <SelectItem value="MPV">MPV</SelectItem>
+            <SelectItem value="HATCHBACK">Hatchback</SelectItem>
+            <SelectItem value="SEDAN">Sedan</SelectItem>
+            <SelectItem value="COUPE">Coupe</SelectItem>
+            <SelectItem value="CONVERTIBLE">Convertible</SelectItem>
+            <SelectItem value="WAGON">Wagon</SelectItem>
+            <SelectItem value="PICKUP">Pickup</SelectItem>
+            <SelectItem value="VAN">Van</SelectItem>
+            <SelectItem value="CROSSOVER">Crossover</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Transmission */}
@@ -84,45 +91,41 @@ export default function VehicleFilters({ filters, onChange }: VehicleFiltersProp
         <div className="space-y-2">
           <div className="relative">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">Rp</span>
-            <input
+            <Input
               type="number"
               placeholder="Min"
               value={filters.minPrice}
               onChange={(e) => onChange({ minPrice: e.target.value })}
-              className="w-full pl-8 pr-2 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white outline-none focus:border-blue-500"
+              className="pl-8 bg-white"
             />
           </div>
           <div className="relative">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">Rp</span>
-            <input
+            <Input
               type="number"
               placeholder="Maks"
               value={filters.maxPrice}
               onChange={(e) => onChange({ maxPrice: e.target.value })}
-              className="w-full pl-8 pr-2 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white outline-none focus:border-blue-500"
+              className="pl-8 bg-white"
             />
           </div>
         </div>
       </div>
 
       {/* Quick filters */}
-      <div>
+      <div className="space-y-3">
         <p className="font-semibold text-slate-800 mb-2">Lainnya</p>
-        <label className="flex items-center gap-2 py-1 cursor-pointer text-slate-900 font-medium">
-          <input
-            type="checkbox"
+        <label className="flex items-center gap-2 cursor-pointer text-slate-900 font-medium">
+          <Checkbox
             checked={filters.isFeatured}
-            onChange={(e) => onChange({ isFeatured: e.target.checked })}
-            className="accent-blue-600"
+            onCheckedChange={(c) => onChange({ isFeatured: c === true })}
           />
           Pilihan Terbaik
         </label>
-        <label className="flex items-center gap-2 py-1 cursor-pointer text-slate-900 font-medium">
-          <input
-            type="checkbox"
+        <label className="flex items-center gap-2 cursor-pointer text-slate-900 font-medium">
+          <Checkbox
             checked={filters.isNewArrival}
-            onChange={(e) => onChange({ isNewArrival: e.target.checked })}
-            className="accent-blue-600"
+            onCheckedChange={(c) => onChange({ isNewArrival: c === true })}
           />
           Baru Masuk
         </label>

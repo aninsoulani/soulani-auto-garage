@@ -1,4 +1,10 @@
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 import type { TransmissionType, FuelType, InspectionStatus } from '@/types/api.types';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 // ─── IDR Currency Formatting ───────────────────────────────────────────────────
 
@@ -78,9 +84,9 @@ export function getInspectionStatusMeta(s: InspectionStatus): {
   icon: string;
 } {
   const map: Record<InspectionStatus, { label: string; color: string; bgColor: string; icon: string }> = {
-    PASS: { label: 'Baik', color: 'text-emerald-700', bgColor: 'bg-emerald-50', icon: '✓' },
-    FAIL: { label: 'Perlu Perbaikan', color: 'text-rose-700', bgColor: 'bg-rose-50', icon: '✗' },
-    NEEDS_ATTENTION: { label: 'Perhatikan', color: 'text-amber-700', bgColor: 'bg-amber-50', icon: '⚠' },
+    PASS: { label: 'Baik', color: 'text-emerald-700', bgColor: 'bg-emerald-50', icon: 'check' },
+    FAIL: { label: 'Perlu Perbaikan', color: 'text-rose-700', bgColor: 'bg-rose-50', icon: 'x' },
+    NEEDS_ATTENTION: { label: 'Perhatikan', color: 'text-amber-700', bgColor: 'bg-amber-50', icon: 'alert-triangle' },
   };
   return map[s] ?? { label: s, color: 'text-gray-700', bgColor: 'bg-gray-50', icon: '?' };
 }

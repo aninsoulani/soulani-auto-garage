@@ -10,7 +10,7 @@
 ### Desktop (1440px+)
 ```text
 +-----------------------------------------------------------------------------+
-| [Logo]            Buy Used   |   Rent a Car   |   About Us        [ Log In ]|
+| [Logo]          Beli Mobil   |   Sewa Mobil   |   Tentang Kami    [ Log In ]|
 +-----------------------------------------------------------------------------+
 |                                                                             |
 |                         FIND YOUR PERFECT DRIVE                             |
@@ -68,12 +68,14 @@
 
 ---
 
-## 2. Sales Listing
+## 2. Sales Listing (`/sales`)
+
+*Features URL-synchronized filter state (e.g., `?carType=SUV&transmission=AUTOMATIC`). Active filter chips allow quick removal. The layout is divided into ACTIVE ("Unit Tersedia") and ARCHIVED ("Baru Saja Terjual / Dalam Perawatan") sections.*
 
 ### Desktop
 ```text
 +-----------------------------------------------------------------------------+
-| [Logo]            Buy Used   |   Rent a Car   |   About Us        [ Log In ]|
+| [Logo]          Beli Mobil   |   Sewa Mobil   |   Tentang Kami    [ Log In ]|
 +-----------------------------------------------------------------------------+
 | Home > Used Cars                                                            |
 +-----------------------------------------------------------------------------+
@@ -118,11 +120,11 @@
 
 ---
 
-## 3. Vehicle Detail (Sales) - Lead Capture State
+## 3. Vehicle Detail (Sales) - VDP (`/sales/[slug]`)
 
-*Per Product Architecture, all sales inquiries MUST be logged into the CRM before redirecting to WhatsApp.*
+*Per Product Architecture, all sales inquiries MUST be logged into the CRM before redirecting to WhatsApp. For vehicles with status `SOLD` or `MAINTENANCE`, the inquiry form is replaced with a "Pendaftaran Ditutup" panel.*
 
-### Desktop
+### Desktop (ACTIVE Status)
 ```text
 +-----------------------------------------------------------------------------+
 | [Logo]                                                            [ Log In ]|
@@ -164,6 +166,17 @@
 |                         |
 | [ SUBMIT & CHAT (WA) ]  |
 +-------------------------+
+
+### Inquiry Closed State (SOLD / MAINTENANCE)
+*When the vehicle is not ACTIVE, the CTA area is replaced with an informational panel.*
+```text
++---------------------------------------+
+| Pendaftaran Ditutup                   |
+| Unit kendaraan ini sudah tidak        |
+| tersedia untuk penawaran harga atau   |
+| sesi tanya jawab.                     |
++---------------------------------------+
+```
 ```
 
 ---
@@ -279,9 +292,9 @@
 
 ---
 
-## 6. Admin Dashboard
+## 6. Admin Dashboard (`/(admin)/admin/dashboard`)
 
-*Updated to reflect the Product Architecture's requirement for tracking Lead Types, Offers, and Long-Term Rental quotes within the CRM.*
+*Updated to reflect the Product Architecture's requirement for tracking Lead Types, Offers, and Long-Term Rental quotes within the CRM. Admin pages are contained within the `/(admin)/admin/` route group.*
 
 ### Desktop
 ```text

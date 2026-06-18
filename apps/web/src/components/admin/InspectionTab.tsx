@@ -1,8 +1,12 @@
 'use client';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function InspectionTab({ register, vehicleId, errors }: { register: any, vehicleId: number | null, errors: any }) {
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function InspectionTab({ control }: { control: any }) {
 
   const statusOptions = [
     { value: 'PASS', label: 'Pass' },
@@ -26,54 +30,84 @@ export default function InspectionTab({ register, vehicleId, errors }: { registe
       <h3 className="text-lg font-bold mb-4 text-gray-800">Inspection Report</h3>
       
       <div className="grid grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Date *</label>
-          <input 
-            type="date" 
-            {...register('inspectionDate')} 
-            className={`w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring ${errors.inspectionDate ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} 
-          />
-          {errors.inspectionDate && <p className="text-red-500 text-sm mt-1">❌ {errors.inspectionDate.message}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Inspector Name *</label>
-          <input 
-            type="text" 
-            {...register('inspectorName')} 
-            className={`w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring ${errors.inspectorName ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} 
-            placeholder="John Doe"
-          />
-          {errors.inspectorName && <p className="text-red-500 text-sm mt-1">❌ {errors.inspectorName.message}</p>}
-        </div>
+        <FormField
+          control={control}
+          name="inspectionDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Inspection Date *</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} value={field.value || ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name="inspectorName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Inspector Name *</FormLabel>
+              <FormControl>
+                <Input type="text" placeholder="John Doe" {...field} value={field.value || ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
       <div className="border-t pt-4 mt-6">
         <h4 className="font-semibold text-gray-700 mb-4">Component Status</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {inspectionFields.map((field) => (
-            <div key={field.name}>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{field.label}</label>
-              <select 
-                {...register(field.name)} 
-                className="w-full border border-gray-300 text-sm px-2 py-1.5 rounded text-black bg-white focus:ring focus:ring-blue-200 focus:outline-none"
-              >
-                {statusOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
+          {inspectionFields.map((f) => (
+            <FormField
+              key={f.name}
+              control={control}
+              name={f.name}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium text-gray-600">{f.label}</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || 'PASS'}>
+                    <FormControl>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {statusOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           ))}
         </div>
       </div>
 
       <div className="border-t pt-4 mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">General Notes</label>
-        <textarea 
-          {...register('inspectionGeneralNotes')} 
-          rows={3} 
-          className="w-full border border-gray-300 px-3 py-2 rounded text-black bg-white focus:ring focus:ring-blue-200 focus:outline-none"
-          placeholder="Any additional notes or details about the inspection..."
-        ></textarea>
+        <FormField
+          control={control}
+          name="inspectionGeneralNotes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>General Notes</FormLabel>
+              <FormControl>
+                <Textarea 
+                  rows={3} 
+                  placeholder="Any additional notes or details about the inspection..."
+                  {...field}
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );

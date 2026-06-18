@@ -7,7 +7,13 @@ import type { LeadType, LeadSource } from '@/types/api.types';
 import { LEAD_TYPE_LABELS } from '@/lib/utils';
 import { submitLead } from '@/lib/api';
 import LeadSuccessState from './LeadSuccessState';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MessageCircle } from 'lucide-react';
+
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 // ─── Zod Schema ──────────────────────────────────────────────────────────────
 
@@ -89,18 +95,23 @@ export default function InquiryForm({
 
   const actualDefaultType = defaultType || (listingType === 'RENTAL' ? 'RENTAL_INQUIRY' : 'SALES_INQUIRY');
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<InquiryFormData>({
-    resolver: zodResolver(inquirySchema),
-    defaultValues: { type: actualDefaultType as LeadType, source },
+  const form = useForm<InquiryFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(inquirySchema as any),
+    defaultValues: { 
+      type: actualDefaultType as LeadType, 
+      source,
+      customerName: '',
+      customerPhone: '',
+      customerEmail: '',
+      offeredPrice: '',
+      message: ''
+    },
   });
 
-  const watchedType = watch('type');
+  const watchedType = form.watch('type');
   const showOfferedPrice = watchedType === 'MAKE_OFFER';
+  const isSubmitting = form.formState.isSubmitting;
 
   const onSubmit = async (data: InquiryFormData) => {
     setServerError('');
@@ -138,168 +149,146 @@ export default function InquiryForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-      {/* Vehicle context header */}
-      <div className="text-sm text-slate-500 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-        <span className="font-medium text-slate-800">{vehicleName}</span>
-      </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        {/* Vehicle context header */}
+        <div className="text-sm text-slate-500 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+          <span className="font-medium text-slate-800">{vehicleName}</span>
+        </div>
 
-      {/* Name */}
-      <div>
-        <label htmlFor="inquiry-name" className="block text-sm font-medium text-slate-700 mb-1">
-          Nama Lengkap <span className="text-rose-500">*</span>
-        </label>
-        <input
-          id="inquiry-name"
-          type="text"
-          placeholder="Contoh: Budi Santoso"
-          autoComplete="name"
-          className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
-            errors.customerName
-              ? 'border-rose-400 focus:ring-2 focus:ring-rose-300'
-              : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
-          }`}
-          {...register('customerName')}
+        <FormField
+          control={form.control}
+          name="customerName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nama Lengkap <span className="text-rose-500">*</span></FormLabel>
+              <FormControl>
+                <Input placeholder="Contoh: Budi Santoso" autoComplete="name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors.customerName && (
-          <p className="mt-1 text-xs text-rose-600">{errors.customerName.message}</p>
-        )}
-      </div>
 
-      {/* Phone */}
-      <div>
-        <label htmlFor="inquiry-phone" className="block text-sm font-medium text-slate-700 mb-1">
-          No. WhatsApp <span className="text-rose-500">*</span>
-        </label>
-        <input
-          id="inquiry-phone"
-          type="tel"
-          placeholder="08123456789"
-          autoComplete="tel"
-          className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
-            errors.customerPhone
-              ? 'border-rose-400 focus:ring-2 focus:ring-rose-300'
-              : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
-          }`}
-          {...register('customerPhone')}
+        <FormField
+          control={form.control}
+          name="customerPhone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>No. WhatsApp <span className="text-rose-500">*</span></FormLabel>
+              <FormControl>
+                <Input type="tel" placeholder="08123456789" autoComplete="tel" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors.customerPhone && (
-          <p className="mt-1 text-xs text-rose-600">{errors.customerPhone.message}</p>
-        )}
-      </div>
 
-      {/* Email (optional) */}
-      <div>
-        <label htmlFor="inquiry-email" className="block text-sm font-medium text-slate-700 mb-1">
-          Email <span className="text-slate-400 font-normal text-xs">(opsional)</span>
-        </label>
-        <input
-          id="inquiry-email"
-          type="email"
-          placeholder="nama@email.com"
-          autoComplete="email"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
-          {...register('customerEmail')}
+        <FormField
+          control={form.control}
+          name="customerEmail"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email <span className="text-slate-400 font-normal text-xs">(opsional)</span></FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="nama@email.com" autoComplete="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors.customerEmail && (
-          <p className="mt-1 text-xs text-rose-600">{errors.customerEmail.message}</p>
-        )}
-      </div>
 
-      {/* Inquiry Type */}
-      <div>
-        <label htmlFor="inquiry-type" className="block text-sm font-medium text-slate-700 mb-1">
-          Jenis Pertanyaan <span className="text-rose-500">*</span>
-        </label>
-        <select
-          id="inquiry-type"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
-          {...register('type')}
-        >
-          {options.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </div>
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Jenis Pertanyaan <span className="text-rose-500">*</span></FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Pilih Jenis Pertanyaan" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {options.map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      {/* Offered Price (conditional: MAKE_OFFER only) */}
-      <div
-        className={`transition-all duration-200 overflow-hidden ${
-          showOfferedPrice ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <label htmlFor="inquiry-price" className="block text-sm font-medium text-slate-700 mb-1">
-          Harga Penawaran (IDR) <span className="text-rose-500">*</span>
-        </label>
-        <div className="relative">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">
-            Rp
-          </span>
-          <input
-            id="inquiry-price"
-            type="number"
-            min="0"
-            step="1000000"
-            placeholder="850000000"
-            className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
-              errors.offeredPrice
-                ? 'border-rose-400 focus:ring-2 focus:ring-rose-300'
-                : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
-            }`}
-            {...register('offeredPrice')}
+        <div className={`transition-all duration-200 overflow-hidden ${showOfferedPrice ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
+          <FormField
+            control={form.control}
+            name="offeredPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Harga Penawaran (IDR) <span className="text-rose-500">*</span></FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">
+                      Rp
+                    </span>
+                    <Input type="number" min="0" step="1000000" placeholder="850000000" className="pl-10" {...field} />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
-        {errors.offeredPrice && (
-          <p className="mt-1 text-xs text-rose-600">{errors.offeredPrice.message}</p>
-        )}
-      </div>
 
-      {/* Message (optional) */}
-      <div>
-        <label htmlFor="inquiry-message" className="block text-sm font-medium text-slate-700 mb-1">
-          Pesan <span className="text-slate-400 font-normal text-xs">(opsional)</span>
-        </label>
-        <textarea
-          id="inquiry-message"
-          rows={3}
-          placeholder="Tulis pertanyaan atau keterangan tambahan..."
-          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
-          {...register('message')}
+        <FormField
+          control={form.control}
+          name="message"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Pesan <span className="text-slate-400 font-normal text-xs">(opsional)</span></FormLabel>
+              <FormControl>
+                <Textarea rows={3} placeholder="Tulis pertanyaan atau keterangan tambahan..." className="resize-none" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      {/* Server error */}
-      {serverError && (
-        <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2.5 rounded-xl">
-          {serverError}
-        </p>
-      )}
-
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-150 active:scale-95 text-sm"
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 size={16} className="animate-spin" />
-            Mengirim...
-          </>
-        ) : (
-          '📲 Kirim & Chat via WhatsApp'
+        {/* Server error */}
+        {serverError && (
+          <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2.5 rounded-xl">
+            {serverError}
+          </p>
         )}
-      </button>
 
-      <p className="text-center text-xs text-slate-400">
-        Dengan mengirim, Anda setuju dengan{' '}
-        <a href="/syarat" className="underline hover:text-slate-600">
-          Syarat & Ketentuan
-        </a>{' '}
-        kami.
-      </p>
-    </form>
+        {/* Submit */}
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full flex items-center justify-center gap-2 py-6 text-base font-bold"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Mengirim...
+            </>
+          ) : (
+            <><MessageCircle className="w-4 h-4 mr-2" /> Kirim & Chat via WhatsApp</>
+          )}
+        </Button>
+
+        <p className="text-center text-xs text-slate-400">
+          Dengan mengirim, Anda setuju dengan{' '}
+          <a href="/syarat" className="underline hover:text-slate-600">
+            Syarat & Ketentuan
+          </a>{' '}
+          kami.
+        </p>
+      </form>
+    </Form>
   );
 }

@@ -196,13 +196,13 @@ export default async function HomePage() {
               viewAllHref="/sales?isFeatured=true"
             />
             {featured.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {featured.slice(0, 8).map((v) => (
                   <VehicleCard key={v.id} vehicle={v} variant="sale" />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {/* Fallback skeleton while inventory is being added */}
                 {Array.from({ length: 4 }, (_, i) => <SkeletonCard key={i} />)}
               </div>
@@ -218,7 +218,7 @@ export default async function HomePage() {
               subtitle="Kendaraan terbaru yang baru saja tersedia"
               viewAllHref="/sales?isNewArrival=true"
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
               {arrivals.slice(0, 4).map((v) => (
                 <VehicleCard key={v.id} vehicle={v} variant="sale" />
               ))}

@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { SlidersHorizontal, ArrowUpDown, X } from 'lucide-react';
+import { SlidersHorizontal, ArrowUpDown, X, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { getVehicles } from '@/lib/api';
 import VehicleGrid from '@/components/vehicles/VehicleGrid';
 import VehicleFilters, { FilterState } from '@/components/vehicles/VehicleFilters';
@@ -150,26 +153,28 @@ function SalesContent() {
 
         <div className="flex gap-2">
           {/* Mobile filter button */}
-          <button
+          <Button
+            variant="outline"
             onClick={() => setFiltersOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="lg:hidden flex items-center gap-2"
           >
             <SlidersHorizontal size={16} />
             Filter {activeFilterCount > 0 && <span className="bg-blue-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{activeFilterCount}</span>}
-          </button>
+          </Button>
 
           {/* Sort */}
-          <div className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm">
+          <div className="flex items-center gap-2">
             <ArrowUpDown size={14} className="text-slate-400" />
-            <select
-              value={filters.sort}
-              onChange={(e) => updateFilters({ sort: e.target.value })}
-              className="bg-transparent text-slate-900 font-medium outline-none cursor-pointer"
-            >
-              <option value="newest">Terbaru</option>
-              <option value="price:asc">Harga Terendah</option>
-              <option value="price:desc">Harga Tertinggi</option>
-            </select>
+            <Select value={filters.sort} onValueChange={(val) => updateFilters({ sort: val || undefined })}>
+              <SelectTrigger className="w-[160px] bg-white">
+                <SelectValue placeholder="Urutkan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Terbaru</SelectItem>
+                <SelectItem value="price:asc">Harga Terendah</SelectItem>
+                <SelectItem value="price:desc">Harga Tertinggi</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -177,14 +182,14 @@ function SalesContent() {
       {/* Search bar */}
       <div className="mb-5">
         <div className="relative max-w-md">
-          <input
+          <Input
             type="search"
             placeholder="Cari merek atau model..."
             value={filters.search}
             onChange={(e) => updateFilters({ search: e.target.value })}
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-900 bg-white placeholder-slate-400"
+            className="pl-10 bg-white"
           />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
         </div>
       </div>
 
@@ -230,12 +235,9 @@ function SalesContent() {
               title="Tidak ada mobil ditemukan"
               description="Coba ubah filter atau kata kunci pencarian Anda."
               action={
-                <button
-                  onClick={handleClearFilters}
-                  className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
-                >
+                <Button onClick={handleClearFilters}>
                   Reset Filter
-                </button>
+                </Button>
               }
             />
           ) : (
@@ -276,33 +278,33 @@ function SalesContent() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-8">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white disabled:opacity-40 hover:bg-slate-50 transition-colors"
               >
                 ← Sebelumnya
-              </button>
+              </Button>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const pageNum = i + 1;
                 return (
-                  <button
+                  <Button
                     key={pageNum}
+                    variant={page === pageNum ? 'default' : 'outline'}
                     onClick={() => setPage(pageNum)}
-                    className={`w-9 h-9 text-sm font-medium rounded-xl border transition-colors ${page === pageNum ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
+                    className="w-9 h-9 p-0"
                   >
                     {pageNum}
-                  </button>
+                  </Button>
                 );
               })}
-              <button
+              <Button
+                variant="outline"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white disabled:opacity-40 hover:bg-slate-50 transition-colors"
               >
                 Berikutnya →
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -320,12 +322,13 @@ function SalesContent() {
               </button>
             </div>
             <VehicleFilters filters={filters} onChange={(u) => { updateFilters(u); }} />
-            <button
+            <Button
+              className="w-full mt-5"
+              size="lg"
               onClick={() => setFiltersOpen(false)}
-              className="w-full mt-5 bg-blue-600 text-white font-bold py-3 rounded-xl text-sm"
             >
               Tampilkan {total} Hasil
-            </button>
+            </Button>
           </div>
         </div>
       )}

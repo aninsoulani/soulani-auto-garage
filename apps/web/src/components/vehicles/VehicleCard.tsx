@@ -30,8 +30,8 @@ export default function VehicleCard({ vehicle, variant = 'sale' }: VehicleCardPr
     <Link
       href={href}
       className={`group bg-white rounded-2xl border border-slate-100 overflow-hidden transition-all duration-200 flex flex-col ${isUnavailable
-          ? 'opacity-65 grayscale-[40%]'
-          : 'hover:shadow-md hover:-translate-y-1'
+        ? 'opacity-65 grayscale-[40%]'
+        : 'hover:shadow-md hover:-translate-y-1'
         }`}
     >
       {/* Image */}

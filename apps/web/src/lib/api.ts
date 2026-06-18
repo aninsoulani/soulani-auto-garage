@@ -82,13 +82,13 @@ export async function getVehicleBySlug(slug: string): Promise<Vehicle> {
 
 /** Convenience: fetch featured sale vehicles for the homepage grid. */
 export async function getFeaturedVehicles(limit = 8): Promise<Vehicle[]> {
-  const result = await getVehicles({ listingType: 'SALE', isFeatured: true, limit, status: 'ACTIVE' } as any);
+  const result = await getVehicles({ listingType: 'SALE', isFeatured: true, limit, status: 'ACTIVE' } as unknown as VehicleQueryParams);
   return result.data;
 }
 
 /** Convenience: fetch new arrivals for the homepage. */
 export async function getNewArrivalVehicles(limit = 4): Promise<Vehicle[]> {
-  const result = await getVehicles({ listingType: 'SALE', isNewArrival: true, limit, status: 'ACTIVE' } as any);
+  const result = await getVehicles({ listingType: 'SALE', isNewArrival: true, limit, status: 'ACTIVE' } as unknown as VehicleQueryParams);
   return result.data;
 }
 

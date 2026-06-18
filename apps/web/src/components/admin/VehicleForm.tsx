@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { apiFetch } from '@/lib/api';
@@ -9,7 +9,15 @@ import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import ImageUploaderTab from './ImageUploaderTab';
 import PricingTab from './PricingTab';
+import { AlertCircle } from 'lucide-react';
 import InspectionTab from './InspectionTab';
+
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 const baseSchema = z.object({
   make: z.string().min(1, 'Merk is required.'),
@@ -91,10 +99,10 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
       const filesArray = Array.from(e.target.files);
       const newFiles = [...selectedFiles, ...filesArray];
       setSelectedFiles(newFiles);
-      
+
       const previews = filesArray.map(file => URL.createObjectURL(file));
       setLocalImagePreviews(prev => [...prev, ...previews]);
-      
+
       setValue('images', newFiles, { shouldValidate: true });
     }
   };
@@ -103,7 +111,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
     const newFiles = selectedFiles.filter((_, i) => i !== index);
     setSelectedFiles(newFiles);
     setLocalImagePreviews(prev => prev.filter((_, i) => i !== index));
-    
+
     setValue('images', newFiles, { shouldValidate: true });
   };
 
@@ -132,13 +140,14 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
     const [draggedPreview] = newPreviews.splice(draggedIndex, 1);
     newPreviews.splice(targetIndex, 0, draggedPreview);
     setLocalImagePreviews(newPreviews);
-    
+
     setDraggedIndex(null);
     setValue('images', newFiles, { shouldValidate: true });
   };
 
-  const { register, handleSubmit, watch, control, setValue, trigger, formState: { errors, isSubmitting } } = useForm<VehicleFormValues>({
-    resolver: zodResolver(getVehicleSchema(!!vehicleId)),
+  const form = useForm<VehicleFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(getVehicleSchema(!!vehicleId) as any),
     defaultValues: {
       make: initialData?.make || '',
       model: initialData?.model || '',
@@ -178,6 +187,8 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
     }
   });
 
+  const { handleSubmit, watch, control, setValue, formState: { errors, isSubmitting } } = form;
+
   const currentListingType = watch('listingType');
 
   const onSubmit = async (data: VehicleFormValues) => {
@@ -193,23 +204,17 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         }
       }
       const {
-        salesPrice, salesPreviousOwners,
-        rentalDailyRate, rentalDepositAmount, rentalIsLongTermEligible,
-        inspectionDate, inspectorName, inspectionEngineStatus, inspectionTransmissionStatus,
-        inspectionSuspensionStatus, inspectionElectricalStatus, inspectionAcStatus,
-        inspectionTiresStatus, inspectionInteriorStatus, inspectionExteriorStatus,
-        inspectionGeneralNotes,
         ...coreData
       } = data;
 
-      let savedVehicleId = vehicleId;
+      const savedVehicleId = vehicleId;
 
       if (!savedVehicleId) {
         const formData = new FormData();
         selectedFiles.forEach(file => {
           formData.append('files', file);
         });
-        
+
         // Construct the full payload for the wizard
         const wizardData = {
           ...coreData,
@@ -241,8 +246,8 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         });
 
         if (!res.ok) {
-           const err = await res.json();
-           throw new Error(err.message || 'Creation failed');
+          const err = await res.json();
+          throw new Error(err.message || 'Creation failed');
         }
       } else {
         await apiFetch(`/vehicles/${savedVehicleId}`, {
@@ -348,220 +353,179 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
-      <div className="flex border-b border-gray-200 bg-gray-50">
-        <button
-          type="button"
-          onClick={() => setActiveTab('core')}
-          className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'core' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          Core Details {hasCoreErrors && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('images')}
-          className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'images' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          Images {hasImageErrors && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('inspections')}
-          className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'inspections' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          Inspections {hasInspectionErrors && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('pricing')}
-          className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'pricing' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          Pricing Settings {hasPricingErrors && <span title="Contains errors" className="text-red-500 text-xs">⚠️</span>}
-        </button>
-      </div>
-
-      <div className="p-8">
-        <div className={activeTab === 'core' ? 'block' : 'hidden'}>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Merk *</label>
-              <input placeholder="Toyota" {...register('make')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.make ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
-              {errors.make && <p className="text-red-500 text-sm mt-1">❌ {errors.make.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Model *</label>
-              <input placeholder="Fortuner GR Sport" {...register('model')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.model ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
-              {errors.model && <p className="text-red-500 text-sm mt-1">❌ {errors.model.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Year *</label>
-              <input placeholder="2023" type="number" {...register('year', { valueAsNumber: true })} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.year ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
-              {errors.year && <p className="text-red-500 text-sm mt-1">❌ {errors.year.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Color *</label>
-              <input placeholder="White" {...register('color')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.color ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
-              {errors.color && <p className="text-red-500 text-sm mt-1">❌ {errors.color.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Listing Type *</label>
-              <select {...register('listingType')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200">
-                <option value="SALE">Sale</option>
-                <option value="RENTAL">Rental</option>
-                <option value="BOTH">Both</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
-              <select {...register('status')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200">
-                <option value="ACTIVE">Active</option>
-                <option value="SOLD">Sold</option>
-                <option value="RENTED">Rented</option>
-                <option value="MAINTENANCE">Maintenance</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Plate Number *</label>
-              <input placeholder="B 1234 XYZ" {...register('plateNumber')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.plateNumber ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
-              {errors.plateNumber && <p className="text-red-500 text-sm mt-1">❌ {errors.plateNumber.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">VIN</label>
-              <input placeholder="MHF123..." {...register('vin')} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring border-gray-300 focus:ring-blue-200`} />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mileage (km) *</label>
-              <input placeholder="45000" type="number" {...register('mileage', { valueAsNumber: true })} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.mileage ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`} />
-              {errors.mileage && <p className="text-red-500 text-sm mt-1">❌ {errors.mileage.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Car Type *</label>
-              <select {...register('carType')} className={`w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring ${errors.carType ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`}>
-                <option value="SUV">SUV</option>
-                <option value="MPV">MPV</option>
-                <option value="HATCHBACK">Hatchback</option>
-                <option value="SEDAN">Sedan</option>
-                <option value="COUPE">Coupe</option>
-                <option value="CONVERTIBLE">Convertible</option>
-                <option value="WAGON">Wagon</option>
-                <option value="PICKUP">Pickup</option>
-                <option value="VAN">Van</option>
-                <option value="CROSSOVER">Crossover</option>
-              </select>
-              {errors.carType && <p className="text-red-500 text-sm mt-1">❌ {errors.carType.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Transmission</label>
-              <select {...register('transmission')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200">
-                <option value="AUTOMATIC">Automatic</option>
-                <option value="MANUAL">Manual</option>
-                <option value="CVT">CVT</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
-              <select {...register('fuelType')} className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring focus:ring-blue-200">
-                <option value="GASOLINE">Gasoline</option>
-                <option value="DIESEL">Diesel</option>
-                <option value="HYBRID">Hybrid</option>
-                <option value="ELECTRIC">Electric</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" {...register('isFeatured')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
-                <div>
-                  <span className="block text-sm font-semibold text-gray-900">Pilihan Terbaik (Featured)</span>
-                  <span className="block text-xs text-gray-500">Show this vehicle prominently on the homepage</span>
-                </div>
-              </label>
-            </div>
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" {...register('isNewArrival')} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
-                <div>
-                  <span className="block text-sm font-semibold text-gray-900">Baru Masuk (New Arrival)</span>
-                  <span className="block text-xs text-gray-500">Tag this vehicle as newly arrived inventory</span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-            <textarea placeholder="Well maintained vehicle with complete service history" {...register('description')} rows={5} className={`w-full border rounded px-3 py-2 text-black bg-white focus:outline-none focus:ring ${errors.description ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`}></textarea>
-            {errors.description && <p className="text-red-500 text-sm mt-1">❌ {errors.description.message}</p>}
-          </div>
-        </div>
-
-        <div className={activeTab === 'images' ? 'block' : 'hidden'}>
-          {errors.images && typeof errors.images.message === 'string' && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-6">
-              <p className="text-sm mt-1">❌ {errors.images.message}</p>
-            </div>
-          )}
-          {vehicleId ? (
-            <ImageUploaderTab vehicleId={vehicleId} initialImages={initialData?.images || []} />
-          ) : (
-            <div className="space-y-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col justify-center items-center gap-2">
-                <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
-                  Select Images (Max 5MB)
-                  <input type="file" multiple accept="image/png, image/jpeg, image/webp, image/jfif" className="hidden" onChange={handleLocalUpload} />
-                </label>
-                <span className="text-xs text-gray-500">JPG, PNG, WebP, and JFIF are supported. Min 1 required.</span>
-              </div>
-
-              <div className="grid grid-cols-4 gap-4">
-                {localImagePreviews.map((preview, index) => (
-                  <div 
-                    key={index} 
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, index)}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, index)}
-                    className={`border rounded relative group overflow-hidden bg-gray-100 flex flex-col cursor-move transition ${draggedIndex === index ? 'opacity-50 border-blue-500 border-2' : ''}`}
-                  >
-                    <div className="relative w-full h-32">
-                      <img src={preview} className="object-cover w-full h-full pointer-events-none" alt="Preview" />
-                      {index === 0 && <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow">Primary</span>}
-                    </div>
-                    <div className="bg-white p-2 flex justify-end items-center border-t gap-2">
-                      <button type="button" onClick={() => removeLocalImage(index)} className="text-red-600 font-medium text-xs hover:underline">Remove</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className={activeTab === 'inspections' ? 'block' : 'hidden'}>
-          <InspectionTab register={register} vehicleId={vehicleId ? parseInt(vehicleId) : null} errors={errors} />
-        </div>
-
-        <div className={activeTab === 'pricing' ? 'block' : 'hidden'}>
-          <PricingTab listingType={currentListingType} register={register} errors={errors} />
-        </div>
-
-        <div className="flex justify-end gap-3 border-t mt-8 pt-6 border-gray-200">
+    <Form {...form}>
+      <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+        <div className="flex border-b border-gray-200 bg-gray-50">
           <button
             type="button"
-            onClick={() => router.push('/admin/inventory')}
-            className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-lg font-semibold shadow-sm transition"
+            onClick={() => setActiveTab('core')}
+            className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'core' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Cancel
+            Core Details {hasCoreErrors && <span title="Contains errors"><AlertCircle className="text-red-500 w-4 h-4" /></span>}
           </button>
-          <button disabled={isSubmitting} type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow-md transition disabled:opacity-50">
-            {isSubmitting ? 'Saving...' : 'Save Vehicle'}
+          <button
+            type="button"
+            onClick={() => setActiveTab('images')}
+            className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'images' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Images {hasImageErrors && <span title="Contains errors"><AlertCircle className="text-red-500 w-4 h-4" /></span>}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('inspections')}
+            className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'inspections' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Inspections {hasInspectionErrors && <span title="Contains errors"><AlertCircle className="text-red-500 w-4 h-4" /></span>}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pricing')}
+            className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'pricing' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Pricing Settings {hasPricingErrors && <span title="Contains errors"><AlertCircle className="text-red-500 w-4 h-4" /></span>}
           </button>
         </div>
-      </div>
-    </form>
+
+        <div className="p-8">
+          <div className={activeTab === 'core' ? 'block' : 'hidden'}>
+            <div className="grid grid-cols-2 gap-6">
+              <FormField control={control} name="make" render={({ field }) => (
+                <FormItem><FormLabel>Merk *</FormLabel><FormControl><Input placeholder="Toyota" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="model" render={({ field }) => (
+                <FormItem><FormLabel>Model *</FormLabel><FormControl><Input placeholder="Fortuner GR Sport" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="year" render={({ field }) => (
+                <FormItem><FormLabel>Year *</FormLabel><FormControl><Input type="number" placeholder="2023" {...field} onChange={e => field.onChange(e.target.valueAsNumber || 0)} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="color" render={({ field }) => (
+                <FormItem><FormLabel>Color *</FormLabel><FormControl><Input placeholder="White" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="listingType" render={({ field }) => (
+                <FormItem><FormLabel>Listing Type *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SALE">Sale</SelectItem><SelectItem value="RENTAL">Rental</SelectItem><SelectItem value="BOTH">Both</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="status" render={({ field }) => (
+                <FormItem><FormLabel>Status *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="ACTIVE">Active</SelectItem><SelectItem value="SOLD">Sold</SelectItem><SelectItem value="RENTED">Rented</SelectItem><SelectItem value="MAINTENANCE">Maintenance</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="plateNumber" render={({ field }) => (
+                <FormItem><FormLabel>Plate Number *</FormLabel><FormControl><Input placeholder="B 1234 XYZ" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="vin" render={({ field }) => (
+                <FormItem><FormLabel>VIN</FormLabel><FormControl><Input placeholder="MHF123..." {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="mileage" render={({ field }) => (
+                <FormItem><FormLabel>Mileage (km) *</FormLabel><FormControl><Input type="number" placeholder="45000" {...field} onChange={e => field.onChange(e.target.valueAsNumber || 0)} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="carType" render={({ field }) => (
+                <FormItem><FormLabel>Car Type *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select car type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SUV">SUV</SelectItem><SelectItem value="MPV">MPV</SelectItem><SelectItem value="HATCHBACK">Hatchback</SelectItem><SelectItem value="SEDAN">Sedan</SelectItem><SelectItem value="COUPE">Coupe</SelectItem><SelectItem value="CONVERTIBLE">Convertible</SelectItem><SelectItem value="WAGON">Wagon</SelectItem><SelectItem value="PICKUP">Pickup</SelectItem><SelectItem value="VAN">Van</SelectItem><SelectItem value="CROSSOVER">Crossover</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="transmission" render={({ field }) => (
+                <FormItem><FormLabel>Transmission</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select transmission" /></SelectTrigger></FormControl><SelectContent><SelectItem value="AUTOMATIC">Automatic</SelectItem><SelectItem value="MANUAL">Manual</SelectItem><SelectItem value="CVT">CVT</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+              )} />
+              <FormField control={control} name="fuelType" render={({ field }) => (
+                <FormItem><FormLabel>Fuel Type</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select fuel type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="GASOLINE">Gasoline</SelectItem><SelectItem value="DIESEL">Diesel</SelectItem><SelectItem value="HYBRID">Hybrid</SelectItem><SelectItem value="ELECTRIC">Electric</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+              )} />
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+              <FormField control={control} name="isFeatured" render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-semibold text-gray-900">Pilihan Terbaik (Featured)</FormLabel>
+                    <p className="text-xs text-gray-500">Show this vehicle prominently on the homepage</p>
+                  </div>
+                </FormItem>
+              )} />
+              <FormField control={control} name="isNewArrival" render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-semibold text-gray-900">Baru Masuk (New Arrival)</FormLabel>
+                    <p className="text-xs text-gray-500">Tag this vehicle as newly arrived inventory</p>
+                  </div>
+                </FormItem>
+              )} />
+            </div>
+
+            <div className="mt-6">
+              <FormField control={control} name="description" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description *</FormLabel>
+                  <FormControl>
+                    <Textarea rows={5} placeholder="Well maintained vehicle with complete service history" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+          </div>
+
+          <div className={activeTab === 'images' ? 'block' : 'hidden'}>
+            {errors.images && typeof errors.images.message === 'string' && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-6">
+                <p className="text-sm mt-1"> {errors.images.message}</p>
+              </div>
+            )}
+            {vehicleId ? (
+              <ImageUploaderTab vehicleId={vehicleId} initialImages={initialData?.images || []} />
+            ) : (
+              <div className="space-y-6">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col justify-center items-center gap-2">
+                  <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
+                    Select Images (Max 5MB)
+                    <input type="file" multiple accept="image/png, image/jpeg, image/webp, image/jfif" className="hidden" onChange={handleLocalUpload} />
+                  </label>
+                  <span className="text-xs text-gray-500">JPG, PNG, WebP, and JFIF are supported. Min 1 required.</span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4">
+                  {localImagePreviews.map((preview, index) => (
+                    <div
+                      key={index}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, index)}
+                      className={`border rounded relative group overflow-hidden bg-gray-100 flex flex-col cursor-move transition ${draggedIndex === index ? 'opacity-50 border-blue-500 border-2' : ''}`}
+                    >
+                      <div className="relative w-full h-32">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={preview} className="object-cover w-full h-full pointer-events-none" alt="Preview" />
+                        {index === 0 && <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow">Primary</span>}
+                      </div>
+                      <div className="bg-white p-2 flex justify-end items-center border-t gap-2">
+                        <button type="button" onClick={() => removeLocalImage(index)} className="text-red-600 font-medium text-xs hover:underline">Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className={activeTab === 'inspections' ? 'block' : 'hidden'}>
+            <InspectionTab control={control} />
+          </div>
+
+          <div className={activeTab === 'pricing' ? 'block' : 'hidden'}>
+            <PricingTab listingType={currentListingType} control={control} />
+          </div>
+
+          <div className="flex justify-end gap-3 border-t mt-8 pt-6 border-gray-200">
+            <Button type="button" variant="outline" onClick={() => router.push('/admin/inventory')} className="px-8 py-6 rounded-lg font-semibold">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="px-8 py-6 rounded-lg font-semibold">
+              {isSubmitting ? 'Saving...' : 'Save Vehicle'}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </Form>
   );
 }

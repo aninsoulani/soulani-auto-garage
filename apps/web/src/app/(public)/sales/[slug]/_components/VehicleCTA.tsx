@@ -4,6 +4,7 @@ import { MessageCircle } from 'lucide-react';
 import { formatIDR } from '@/lib/utils';
 import InquirySheet from '@/components/leads/InquirySheet';
 import InquiryForm from '@/components/leads/InquiryForm';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { ListingType } from '@/types/api.types';
 
 interface VehicleCTAProps {
@@ -43,17 +44,17 @@ export default function VehicleCTA({ vehicleId, vehicleName, listingType = 'BOTH
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center w-11 h-11 bg-[#25D366] rounded-xl shrink-0"
+          className={buttonVariants({ variant: 'outline' }) + " flex items-center justify-center w-11 h-11 p-0 bg-[#25D366] hover:bg-[#20b858] border-none shrink-0 rounded-xl"}
           aria-label="Chat via WhatsApp"
         >
           <MessageCircle size={20} className="text-white" />
         </a>
-        <button
+        <Button
           onClick={() => setSheetOpen(true)}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-colors active:scale-95"
+          className="flex-1 py-6 rounded-xl font-bold text-sm"
         >
           Kirim Pertanyaan
-        </button>
+        </Button>
       </div>
 
       {sheetOpen && (

@@ -11,7 +11,7 @@ const BADGE_CONFIG: Record<
   featured: {
     label: 'Pilihan Terbaik',
     className:
-      'bg-gradient-to-r from-amber-400 to-yellow-300 text-neutral-950 text-[10px] font-semibold px-3 py-1 rounded-full shadow-lg',
+      'bg-red-500 text-white text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full shadow-sm'
   },
   'new-arrival': {
     label: 'Unit Terbaru',

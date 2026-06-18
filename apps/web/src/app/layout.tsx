@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono, Instrument_Sans, Figtree } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const figtreeHeading = Figtree({subsets:['latin'],variable:'--font-heading'});
+
+const instrumentSans = Instrument_Sans({subsets:['latin'],variable:'--font-sans'});
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-jakarta-sans",
@@ -24,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={cn("font-sans", instrumentSans.variable, figtreeHeading.variable)}>
       <body
         className={`${jakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >

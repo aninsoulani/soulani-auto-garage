@@ -29,16 +29,18 @@ Soulani Auto Garage is transforming the Indonesian automotive market by providin
 - **Rental Friction:** Booking a car, especially for extended periods, is often a manual, cumbersome process.
 
 # Scope
-This BRD covers the MVP (Phase 1) development, encompassing the public website, inventory management, CRM lead capture, rental booking engine, and RBAC admin dashboard.
+This BRD covers the MVP development, encompassing the public website, inventory management, CRM lead capture, rental booking engine, and RBAC admin dashboard. Phases 1–3 are now complete. Phases 4–7 are planned.
 
 # Functional Requirements
 1. **Public Website:**
    - Display dynamic homepage with search-first hero, quick categories, and featured inventory.
-   - Provide listing pages with filters for Sales and Rentals.
+   - Provide listing pages with filters for Sales, synchronized to URL query parameters.
    - Show Vehicle Detail Pages (VDP) with 150-point inspection reports, images, and specifications.
+   - Conditionally hide the inquiry form and display an informational banner for vehicles with status `SOLD` or `MAINTENANCE`.
 2. **Sales Flow:**
-   - Capture leads (Sales Inquiry, Test Drive, Make Offer) via a form.
-   - Generate a unique Lead ID and save to CRM before redirecting the customer to WhatsApp.
+   - Capture leads (Sales Inquiry, Test Drive, Make Offer) via a form on the VDP.
+   - Generate a unique Lead ID (`LD-YYYY-XXXXX`) and save to CRM before redirecting the customer to WhatsApp.
+   - Only display the inquiry form for vehicles with status `ACTIVE`. Vehicles in `SOLD` or `MAINTENANCE` status show a closed-inquiry panel.
 3. **Rental Flow:**
    - Allow date-based search and availability checking.
    - Enable direct booking with guest checkout for Short-Term (1-7 days) rentals.
@@ -46,8 +48,9 @@ This BRD covers the MVP (Phase 1) development, encompassing the public website, 
    - Display offline manual payment instructions to customers upon booking.
 4. **Admin Dashboard (RBAC):**
    - Provide module access based on roles: Super Admin, Sales Staff, Rental Staff.
-   - Enable CRUD operations for Vehicles, Inspections, and Testimonials.
+   - Enable CRUD operations for Vehicles (with mandatory image upload and inspection data), Sales Listings, Rental Listings, and Testimonials.
    - Display an Analytics Overview for the Super Admin.
+   - Vehicles start in `DRAFT` status and must be explicitly published to `ACTIVE` to appear publicly.
 5. **CRM & Booking Management:**
    - Provide a Kanban board for Sales Staff to track and update lead statuses.
    - Allow Rental Staff to manage booking statuses and vehicle blackout dates.
@@ -56,13 +59,15 @@ This BRD covers the MVP (Phase 1) development, encompassing the public website, 
 # Non-Functional Requirements
 1. **Performance:** App must use SSG + ISR for public pages for fast load times; CSR for admin dashboard. Animations must be snappy (150-300ms).
 2. **Security:** Implement JWT authentication, RBAC, Helmet, strict CORS, and data sanitization.
-3. **Rate Limiting:** Public lead/booking endpoints must be limited to 5 requests per IP per hour.
-4. **Data Integrity:** Implement soft deletes (`deleted_at`) for all operational models. Capture every write operation via an Audit Logging Middleware.
+3. **Rate Limiting:** Public lead/booking endpoints must be limited to 10 requests per IP per hour (leads) and 5 requests per IP per hour (bookings).
+4. **Data Integrity:** Implement soft deletes (`deleted_at`) for all operational models. Capture every write operation via an Audit Logging Interceptor.
 5. **Storage:** Use local file storage (Multer) for images as an MVP step before migrating to Cloudinary.
 6. **Currency & Localization:** All transactions, prices, and metrics must be in Indonesian Rupiah (IDR). Target market is strictly Indonesia.
 
 # Business Rules
 - **Lead Capture Rule:** All sales inquiries MUST be logged into the CRM before redirecting the user to WhatsApp.
+- **Draft/Publish Rule:** Vehicles created by admin staff enter a `DRAFT` state and must be explicitly published (`PATCH /vehicles/:id/publish`) to become `ACTIVE` and visible on the public website.
+- **Inquiry Availability Rule:** Inquiry forms are only accessible for vehicles with status `ACTIVE`. Vehicles with status `SOLD` or `MAINTENANCE` display a closed-inquiry informational panel instead.
 - **Rental Duration Rule:** Rentals over 7 days must prompt the user for a custom quote, though standard rack-rate booking remains an option.
 - **Data Access Rule:** Sales staff can only view and manage leads explicitly assigned to them.
 - **Currency Rule:** All monetary values must be represented and transacted in IDR.
@@ -77,7 +82,7 @@ This BRD covers the MVP (Phase 1) development, encompassing the public website, 
 # Constraints
 - **Payment Processing:** Automated payment gateways are deferred; MVP relies entirely on manual verification.
 - **Customer Accounts:** Customer portal (login/signup) is out of scope for MVP and deferred to Phase 1.5.
-- **File Storage:** Cloudinary integration is deferred to Phase 7; MVP must handle file storage locally.
+- **File Storage:** Cloudinary integration is deferred to Phase 7; MVP must handle file storage locally via Multer.
 
 # KPIs
 - Total Available Cars
@@ -96,15 +101,15 @@ This BRD covers the MVP (Phase 1) development, encompassing the public website, 
 # Dependencies
 - Third-party hosting platforms (Vercel and Railway).
 - Availability and stability of the WhatsApp Business API/Platform.
-- Local infrastructure (MySQL, Node.js) for the local-first development strategy.
+- Local infrastructure (MySQL via Laragon, Node.js) for the local-first development strategy.
 
 # MVP Scope
-- Public Website & CMS (SEO-optimized listings, homepage).
-- Advanced Inventory Manager & Inspection Module.
-- Rental Engine (Calendar, guest checkout, manual payments, long-term quote flow).
-- Lead CRM (Lead capture, assignment, tracking).
-- Local File Storage implementation.
-- RBAC Admin Dashboard (Super Admin, Sales, Rental).
+- Public Website & CMS (SEO-optimized listings, homepage). ✅ Phases 1–3 Complete.
+- Advanced Inventory Manager & Inspection Module. ✅ Complete.
+- Rental Engine (Calendar, guest checkout, manual payments, long-term quote flow). ⚪ Phase 4.
+- Lead CRM (Lead capture, assignment, tracking). ⚪ Phase 5.
+- Local File Storage implementation. ✅ Complete.
+- RBAC Admin Dashboard (Super Admin, Sales, Rental). ⚪ In Progress.
 
 # Future Scope
 - **Phase 1.5:** Customer Portal (Account creation, booking history, saved vehicles).
@@ -125,4 +130,4 @@ This BRD covers the MVP (Phase 1) development, encompassing the public website, 
 - `api_specification.md`: REST API endpoints and security rules.
 - `design_system.md`: Typography, color palette, components, and responsive design guidelines.
 - `brand_direction.md`: Brand personality, voice, positioning, and visual direction.
-- `schema.prisma`: Prisma ORM schema for the database.
+- `schema.prisma`: Prisma ORM schema for the database (located at `apps/api/prisma/schema.prisma`).

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import type { VehicleInspection } from '@/types/api.types';
 import { getInspectionStatusMeta, formatDate } from '@/lib/utils';
-import { ChevronDown, ShieldCheck } from 'lucide-react';
+import { ChevronDown, ShieldCheck, Check, X, AlertTriangle, HelpCircle } from 'lucide-react';
 
 interface InspectionItem {
   label: string;
@@ -75,6 +75,7 @@ export default function InspectionReportCard({ inspection }: InspectionReportCar
             {INSPECTION_ITEMS.map(({ label, key }) => {
               const status = inspection[key];
               const meta = getInspectionStatusMeta(status);
+              const IconComponent = meta.icon === 'check' ? Check : meta.icon === 'x' ? X : meta.icon === 'alert-triangle' ? AlertTriangle : HelpCircle;
               return (
                 <div
                   key={key}
@@ -82,7 +83,7 @@ export default function InspectionReportCard({ inspection }: InspectionReportCar
                 >
                   <span className="text-sm font-medium text-slate-700">{label}</span>
                   <span className={`text-xs font-bold ${meta.color} flex items-center gap-1`}>
-                    <span>{meta.icon}</span>
+                    <IconComponent size={14} />
                     {meta.label}
                   </span>
                 </div>
