@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Soulani Auto Garage - Frontend Web 🌐
 
-## Getting Started
+This is the frontend application for Soulani Auto Garage, serving both the **Public Landing/Sales Page** and the **Secure Admin Dashboard**. Built with **Next.js (App Router)**.
 
-First, run the development server:
+## 🚀 Technologies Used
+- **Framework:** Next.js (App Router, Server Components)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS + Shadcn UI components
+- **Forms & Validation:** React Hook Form + Zod
+- **State/Notifications:** Zustand, SweetAlert2, Sonner
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠️ Setup & Running Locally
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Environment Variables**
+   Ensure you have configured `.env.local` correctly based on the `.env.example` in the root repository.
+   ```env
+   NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. **Start the Frontend Server**
+   ```bash
+   # development mode
+   pnpm run dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   # build for production
+   pnpm run build
+   pnpm run start
+   ```
 
-## Learn More
+3. **Accessing the App**
+   - **Public Website:** `http://localhost:3000`
+   - **Admin Dashboard:** `http://localhost:3000/login`
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎨 Key Features
+- **Dual-Mode App:** Seamlessly integrates a SEO-friendly public catalog with a deeply nested, protected Admin CRM dashboard.
+- **Strict Validation:** Form inputs (like Profile updates and Lead Inquiries) are rigorously validated using Zod to ensure type safety before hitting the API.
+- **Modern UI/UX:** Utilizes glassmorphism, micro-animations, and conditional rendering (e.g., Striking through "Pemilik Sebelumnya" for first-hand cars).
