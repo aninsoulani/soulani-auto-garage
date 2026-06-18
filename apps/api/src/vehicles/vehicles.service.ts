@@ -176,7 +176,7 @@ export class VehiclesService {
     }
   }
 
-  async findAll(query: QueryVehicleDto) {
+  async findAll(query: QueryVehicleDto, isAdmin: boolean = false) {
     const {
       page = 1,
       limit = 10,
@@ -200,7 +200,11 @@ export class VehiclesService {
     if (status) {
       where.status = status;
     } else {
-      where.status = { in: ['ACTIVE', 'SOLD', 'MAINTENANCE'] };
+      if (isAdmin) {
+        where.status = { in: ['ACTIVE', 'SOLD', 'MAINTENANCE'] };
+      } else {
+        where.status = { in: ['ACTIVE', 'SOLD'] }; // Hide MAINTENANCE from public
+      }
     }
     if (listingType) {
       if (listingType === 'SALE' || listingType === 'RENTAL') {

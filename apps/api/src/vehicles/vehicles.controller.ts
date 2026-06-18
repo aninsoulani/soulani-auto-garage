@@ -56,14 +56,13 @@ export class VehiclesController {
 
   @Get()
   findAllPublic(@Query() query: QueryVehicleDto) {
-    // Rely on service to filter out DRAFT instead of hardcoding ACTIVE
-    return this.vehiclesService.findAll(query);
+    // Public queries explicitly exclude MAINTENANCE (handled in service)
+    return this.vehiclesService.findAll(query, false);
   }
-
 
   @Get('admin/list')
   findAdminAll(@Query() query: QueryVehicleDto) {
-    return this.vehiclesService.findAll(query);
+    return this.vehiclesService.findAll(query, true);
   }
 
   /**
