@@ -10,9 +10,9 @@ This project is built using [Turborepo](https://turborepo.org/) and is structure
 - **`apps/api`**: The backend REST API built with [NestJS](https://nestjs.com/), providing robust endpoints, JWT authentication, and global exception handling.
 - **Database Layer**: Managed by [Prisma ORM](https://www.prisma.io/) connecting to a MySQL database, featuring strict uniqueness constraints, soft deletes, and robust relational mapping.
 
-## 🚀 Current Progress: Phase 3 Complete
+## 🚀 Current Progress: Phase 4 Complete
 
-The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (Vehicle Inventory)**, and **Phase 3 (Data & API Foundations)**.
+The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (Vehicle Inventory)**, **Phase 3 (Data & API Foundations)**, and **Phase 4 (Rental Operations, CMS & CRM Sync)**.
 
 ### Features Implemented:
 - **Public & Admin UI:** Beautiful, dynamic Next.js App Router public landing page, sales listing, and vehicle detail pages (`/sales/[slug]`). Admin dashboard for complete vehicle lifecycle management.
@@ -25,6 +25,10 @@ The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (
 - **Admin Profile Management:** Integrated user profile editing (name and secure password changes) featuring real-time UI synchronization and strict Zod frontend validation.
 - **DevSecOps Rate Limiting:** Centralized, environment-aware `@nestjs/throttler` architecture featuring strict limiters for authentication (`auth`) and data mutations (`mutate`) to prevent brute-force attacks, scaling dynamically during local development.
 - **Audit & Security:** Automated background tracking of core events. Global exception filters that cleanly catch API errors (including `429 Too Many Requests`) and bubble them seamlessly to the UI.
+- **Rental Operations & Booking Calendar (Phase 4):** Completed long-term rentals, blackout dates management, active booking tables, and dynamic date ranges check-out.
+- **Automated Booking Scheduler (Phase 4)**: Automated background scheduler (cron service) that runs periodically to transition booking states (e.g. `CONFIRMED` -> `ACTIVE` when the vehicle is picked up).
+- **Payment Settings & CRM UI Alignment (Phase 4)**: Aligned and synchronised the payment methods UI with the main rentals portal aesthetics, incorporating shared filters, responsive tables, and custom action modals.
+- **Strict TypeScript Refactoring (Phase 4)**: Eliminated unsafe `@typescript-eslint/no-explicit-any` usage across the frontend pages, ensuring tight mapping of custom schemas with Prisma schemas (such as vehicle types, transmission types, and fuel types).
 
 ## 🛠️ Getting Started
 
@@ -75,8 +79,7 @@ pnpm dev
 - The **API** will be available at `http://localhost:3001/api/v1`
 
 ## 🔮 Upcoming Phases
-- **Phase 4:** CMS & Homepage Customization
-- **Phase 5:** Rental Operations & Booking Calendar
+- **Phase 5:** CMS & Homepage Customization
 - **Phase 6:** Advanced CRM, Notifications & Follow-ups
 - **Phase 7:** Production Hardening & Cloud Deployment
 
