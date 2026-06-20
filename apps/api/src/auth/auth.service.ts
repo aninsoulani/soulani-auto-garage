@@ -7,7 +7,10 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
@@ -22,14 +25,26 @@ export class AuthService {
 
     return {
       accessToken: await this.jwtService.signAsync(payload),
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 
   async getProfile(userId: number) {
     return this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, uuid: true, name: true, email: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        uuid: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
     });
   }
 
@@ -42,7 +57,7 @@ export class AuthService {
     return this.prisma.user.update({
       where: { id: userId },
       data,
-      select: { id: true, name: true, email: true, role: true }
+      select: { id: true, name: true, email: true, role: true },
     });
   }
 }

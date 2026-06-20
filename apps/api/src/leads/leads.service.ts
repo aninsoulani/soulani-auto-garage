@@ -2,7 +2,10 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateLeadDto } from './dto/create-lead.dto';
-import { LeadType, LeadSource } from '@prisma/client';
+import { LeadType, LeadSource, LeadStatus, Prisma } from '@prisma/client';
+import { GetLeadsDto } from './dto/get-leads.dto';
+import { UpdateLeadStatusDto } from './dto/update-lead-status.dto';
+import { areIntervalsOverlapping } from 'date-fns';
 
 /** Lead reference ID format: LD-{YEAR}-{5 alphanumeric chars} */
 function generateReferenceId(): string {
@@ -38,7 +41,6 @@ export class LeadsService {
     customerName: string;
     customerPhone: string;
     type: LeadType;
-    offeredPrice?: number | null;
     message?: string | null;
   }): string {
     const waNumber = this.config.get<string>('WHATSAPP_NUMBER') || '6281210663530';
@@ -50,11 +52,6 @@ export class LeadsService {
     text += `No. HP: ${params.customerPhone}.\n`;
     text += `Saya tertarik dengan: ${params.vehicleMake} ${params.vehicleModel} (${params.vehicleYear}).\n`;
     text += `Jenis Pertanyaan: ${typeLabel}.`;
-
-    if (params.type === LeadType.MAKE_OFFER && params.offeredPrice) {
-      const formatted = new Intl.NumberFormat('id-ID').format(params.offeredPrice);
-      text += `\nPenawaran saya: Rp ${formatted}.`;
-    }
 
     if (params.message) {
       text += `\nPesan: ${params.message}.`;
@@ -92,7 +89,6 @@ export class LeadsService {
         customerPhone: dto.customerPhone,
         customerEmail: dto.customerEmail ?? null,
         type: dto.type,
-        offeredPrice: dto.offeredPrice ?? null,
         message: dto.message ?? null,
         source: dto.source ?? LeadSource.ORGANIC,
       },
@@ -112,7 +108,6 @@ export class LeadsService {
       customerName: dto.customerName,
       customerPhone: dto.customerPhone,
       type: dto.type,
-      offeredPrice: dto.offeredPrice ? Number(dto.offeredPrice) : null,
       message: dto.message,
     });
 
@@ -146,13 +141,22 @@ export class LeadsService {
 
   // ─── Admin / CRM queries (used in Phase 5) ────────────────────────────
 
-  async findAll(query: { page?: number; limit?: number; status?: string }) {
-    const { page = 1, limit = 20 } = query;
+  async findAll(query: GetLeadsDto) {
+    const page = query.page ? Number(query.page) : 1;
+    const limit = query.limit ? Number(query.limit) : 20;
     const skip = (page - 1) * limit;
+
+    const where: Prisma.LeadWhereInput = { deletedAt: null };
+    if (query.status) {
+      where.status = query.status as any;
+    }
+    if (query.type) {
+      where.type = query.type as any;
+    }
 
     const [data, total] = await Promise.all([
       this.prisma.lead.findMany({
-        where: { deletedAt: null },
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -179,5 +183,156 @@ export class LeadsService {
 
     if (!lead) throw new NotFoundException(`Lead with ID ${id} not found`);
     return lead;
+  }
+
+  async updateStatus(id: number, dto: UpdateLeadStatusDto, userId: number) {
+    const lead = await this.prisma.lead.findUnique({ where: { id, deletedAt: null } });
+    if (!lead) throw new NotFoundException(`Lead with ID ${id} not found`);
+
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.status === LeadStatus.WON) {
+        if (!dto.startDate || !dto.endDate) {
+          throw new BadRequestException('startDate and endDate are required to mark lead as WON');
+        }
+        
+        if (!lead.vehicleId) {
+          throw new BadRequestException('Lead must be associated with a vehicle to be marked as WON');
+        }
+
+        const startDate = new Date(dto.startDate);
+        const endDate = new Date(dto.endDate);
+
+        console.log('[DEBUG updateStatus] Checking availability for vehicleId:', lead.vehicleId);
+        console.log('[DEBUG updateStatus] dto.startDate:', dto.startDate, '-> parsed startDate:', startDate.toISOString());
+        console.log('[DEBUG updateStatus] dto.endDate:', dto.endDate, '-> parsed endDate:', endDate.toISOString());
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          throw new BadRequestException('Invalid date format');
+        }
+
+        const rentalListing = await tx.rentalListing.findUnique({
+          where: { vehicleId: lead.vehicleId }
+        });
+
+        if (!rentalListing) {
+          throw new BadRequestException('Vehicle is not available for rent');
+        }
+
+        const bookings = await tx.rentalBooking.findMany({
+          where: {
+            rentalListingId: rentalListing.id,
+            status: { in: ['ACTIVE', 'CONFIRMED'] },
+            deletedAt: null,
+          }
+        });
+
+        const isOverlappingBooking = bookings.some((b) => {
+          const bStart = new Date(b.startDate);
+          const bEnd = new Date(b.endDate);
+          bEnd.setHours(bEnd.getHours() + 1); // 1 Hour Handover Buffer
+          return areIntervalsOverlapping(
+            { start: bStart, end: bEnd },
+            { start: startDate, end: endDate },
+            { inclusive: false }
+          );
+        });
+
+        if (isOverlappingBooking) {
+          console.log('[DEBUG updateStatus] Precise overlap found with existing bookings');
+          throw new BadRequestException('Vehicle is already booked for these dates');
+        }
+
+        const blackouts = await tx.blackoutDate.findMany({
+          where: {
+            vehicleId: lead.vehicleId,
+            deletedAt: null,
+          }
+        });
+
+        const isOverlappingBlackout = blackouts.some((b) => {
+          const bStart = new Date(b.startDate);
+          const bEnd = new Date(b.endDate);
+          bEnd.setHours(bEnd.getHours() + 1); // 1 Hour Handover Buffer
+          return areIntervalsOverlapping(
+            { start: bStart, end: bEnd },
+            { start: startDate, end: endDate },
+            { inclusive: false }
+          );
+        });
+
+        if (isOverlappingBlackout) {
+          console.log('[DEBUG updateStatus] Precise overlap found with blackout dates');
+          throw new BadRequestException('Vehicle is unavailable during these dates (blackout)');
+        }
+
+
+        const paymentMethod = await tx.paymentMethod.findFirst({
+          where: { isActive: true }
+        });
+
+        if (!paymentMethod) {
+          throw new BadRequestException('No active payment methods found');
+        }
+
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay));
+        const dailyRate = Number(rentalListing.dailyRate);
+        const totalPrice = dailyRate * days;
+
+        const countToday = await tx.rentalBooking.count({
+          where: {
+            createdAt: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            },
+          },
+        });
+        const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const sequenceStr = String(countToday + 1).padStart(4, '0');
+        const bookingCode = `INV-${todayStr}-${sequenceStr}`;
+
+        await tx.rentalBooking.create({
+          data: {
+            bookingCode,
+            rentalListingId: rentalListing.id,
+            customerName: lead.customerName,
+            customerPhone: lead.customerPhone,
+            customerEmail: lead.customerEmail || 'no-email@example.com',
+            startDate,
+            endDate,
+            paymentMethodId: paymentMethod.id,
+            totalPrice,
+            status: 'PENDING_PAYMENT',
+            withDriver: false,
+            whatsappOptIn: true
+          }
+        });
+      }
+
+      if (dto.status === LeadStatus.LOST) {
+        if (!dto.notes) {
+          throw new BadRequestException('Notes are required when marking a lead as LOST');
+        }
+      }
+
+      const updatedLead = await tx.lead.update({
+        where: { id },
+        data: {
+          status: dto.status,
+          adminNotes: dto.notes || lead.adminNotes
+        }
+      });
+
+      if (dto.notes) {
+        await tx.leadFollowup.create({
+          data: {
+            leadId: id,
+            userId,
+            noteText: `Status changed to ${dto.status}. Notes: ${dto.notes}`
+          }
+        });
+      }
+
+      return updatedLead;
+    });
   }
 }

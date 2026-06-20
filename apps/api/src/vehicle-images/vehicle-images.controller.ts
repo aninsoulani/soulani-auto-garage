@@ -1,4 +1,15 @@
-import { Controller, Post, Param, UseInterceptors, UploadedFiles, Request, Patch, Delete, Body, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  UseInterceptors,
+  UploadedFiles,
+  Request,
+  Patch,
+  Delete,
+  Body,
+  BadRequestException,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -9,7 +20,7 @@ const uploadDir = './uploads/vehicles';
 const inspectionsDir = './uploads/inspections';
 const tempDir = './uploads/temp';
 
-[uploadDir, inspectionsDir, tempDir].forEach(dir => {
+[uploadDir, inspectionsDir, tempDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -20,29 +31,41 @@ export class VehicleImagesController {
   constructor(private readonly vehicleImagesService: VehicleImagesService) {}
 
   @Post()
-  @UseInterceptors(FilesInterceptor('files', 10, {
-    storage: diskStorage({
-      destination: './uploads/vehicles',
-      filename: (req, file, cb) => {
-        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
-        cb(null, `${randomName}${extname(file.originalname)}`);
-      }
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: diskStorage({
+        destination: './uploads/vehicles',
+        filename: (req, file, cb) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png|webp|jfif)$/i)) {
+          return cb(
+            new BadRequestException(
+              'Only image files (JPG, PNG, WebP, JFIF) are allowed!',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     }),
-    fileFilter: (req, file, cb) => {
-      if (!file.originalname.match(/\.(jpg|jpeg|png|webp|jfif)$/i)) {
-        return cb(new BadRequestException('Only image files (JPG, PNG, WebP, JFIF) are allowed!'), false);
-      }
-      cb(null, true);
-    },
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  }))
+  )
   async uploadImages(
     @Param('vehicleId') vehicleId: string,
     @UploadedFiles() files: Express.Multer.File[],
-    @Request() req
+    @Request() req,
   ) {
     const uploadedImages = await Promise.all(
-      files.map(file => this.vehicleImagesService.uploadImage(+vehicleId, file, req.user.id))
+      files.map((file) =>
+        this.vehicleImagesService.uploadImage(+vehicleId, file, req.user.id),
+      ),
     );
     return uploadedImages;
   }
@@ -51,26 +74,38 @@ export class VehicleImagesController {
   reorderImages(
     @Param('vehicleId') vehicleId: string,
     @Body() body: { imageIds: number[] },
-    @Request() req
+    @Request() req,
   ) {
-    return this.vehicleImagesService.reorderImages(+vehicleId, body.imageIds, req.user.id);
+    return this.vehicleImagesService.reorderImages(
+      +vehicleId,
+      body.imageIds,
+      req.user.id,
+    );
   }
 
   @Patch(':imageId/primary')
   setPrimary(
     @Param('vehicleId') vehicleId: string,
     @Param('imageId') imageId: string,
-    @Request() req
+    @Request() req,
   ) {
-    return this.vehicleImagesService.setPrimary(+vehicleId, +imageId, req.user.id);
+    return this.vehicleImagesService.setPrimary(
+      +vehicleId,
+      +imageId,
+      req.user.id,
+    );
   }
 
   @Delete(':imageId')
   removeImage(
     @Param('vehicleId') vehicleId: string,
     @Param('imageId') imageId: string,
-    @Request() req
+    @Request() req,
   ) {
-    return this.vehicleImagesService.removeImage(+vehicleId, +imageId, req.user.id);
+    return this.vehicleImagesService.removeImage(
+      +vehicleId,
+      +imageId,
+      req.user.id,
+    );
   }
 }

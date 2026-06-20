@@ -8,7 +8,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private prisma: PrismaService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET || 'dev_super_secret_access_key_min_64_chars_xxxxxxxxxxxxxxxxxxxxxxx',
+      secretOrKey:
+        process.env.JWT_SECRET ||
+        'dev_super_secret_access_key_min_64_chars_xxxxxxxxxxxxxxxxxxxxxxx',
       ignoreExpiration: false,
     });
   }

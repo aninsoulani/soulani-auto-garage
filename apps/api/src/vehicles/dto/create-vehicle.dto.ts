@@ -1,6 +1,23 @@
-import { IsString, IsNotEmpty, IsInt, IsEnum, IsOptional, IsBoolean, Min, Max, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ListingType, VehicleStatus, TransmissionType, FuelType, CarType, InspectionStatus } from '@prisma/client';
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+  Min,
+  Max,
+  IsNumber,
+} from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+import {
+  ListingType,
+  VehicleStatus,
+  TransmissionType,
+  FuelType,
+  CarType,
+  InspectionStatus,
+} from '@prisma/client';
 
 export class CreateVehicleDto {
   @IsString()
@@ -82,17 +99,50 @@ export class CreateVehicleDto {
   @IsNumber() @IsOptional() rentalDailyRate?: number;
   @IsNumber() @IsOptional() rentalDepositAmount?: number;
   @IsBoolean() @IsOptional() rentalIsLongTermEligible?: boolean;
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  rentalIsDriverAvailable?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  isDriverAvailable?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number(value) : null))
+  @IsNumber()
+  rentalDriverFeePerDay?: number | null;
+
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number(value) : null))
+  @IsNumber()
+  driverFeePerDay?: number | null;
 
   // Inspection Fields
   @IsString() @IsOptional() inspectionDate?: string;
   @IsString() @IsOptional() inspectorName?: string;
-  @IsEnum(InspectionStatus) @IsOptional() inspectionEngineStatus?: InspectionStatus;
-  @IsEnum(InspectionStatus) @IsOptional() inspectionTransmissionStatus?: InspectionStatus;
-  @IsEnum(InspectionStatus) @IsOptional() inspectionSuspensionStatus?: InspectionStatus;
-  @IsEnum(InspectionStatus) @IsOptional() inspectionElectricalStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus)
+  @IsOptional()
+  inspectionEngineStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus)
+  @IsOptional()
+  inspectionTransmissionStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus)
+  @IsOptional()
+  inspectionSuspensionStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus)
+  @IsOptional()
+  inspectionElectricalStatus?: InspectionStatus;
   @IsEnum(InspectionStatus) @IsOptional() inspectionAcStatus?: InspectionStatus;
-  @IsEnum(InspectionStatus) @IsOptional() inspectionTiresStatus?: InspectionStatus;
-  @IsEnum(InspectionStatus) @IsOptional() inspectionInteriorStatus?: InspectionStatus;
-  @IsEnum(InspectionStatus) @IsOptional() inspectionExteriorStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus)
+  @IsOptional()
+  inspectionTiresStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus)
+  @IsOptional()
+  inspectionInteriorStatus?: InspectionStatus;
+  @IsEnum(InspectionStatus)
+  @IsOptional()
+  inspectionExteriorStatus?: InspectionStatus;
   @IsString() @IsOptional() inspectionGeneralNotes?: string;
 }

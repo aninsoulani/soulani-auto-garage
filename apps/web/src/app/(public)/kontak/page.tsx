@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { MapPin, Phone, Mail, Clock, MessageCircle } from 'lucide-react';
+import { IconMapSearch, IconBrandWhatsapp, IconMailSpark, IconClock, IconMessageCircle } from '@tabler/icons-react';
 import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
 
 /**
@@ -22,25 +22,25 @@ export const metadata: Metadata = {
 
 const CONTACT_ITEMS = [
   {
-    icon: Phone,
+    icon: IconBrandWhatsapp,
     label: 'Telepon / WhatsApp',
     value: '+62 812-1066-3530',
     href: 'tel:+6281210663530',
   },
   {
-    icon: Mail,
+    icon: IconMailSpark,
     label: 'Email',
     value: 'info@soulanigarage.com',
     href: 'mailto:info@soulanigarage.com',
   },
   {
-    icon: MapPin,
+    icon: IconMapSearch,
     label: 'Alamat Showroom',
     value: 'Jakarta, Indonesia',
     href: 'https://maps.google.com',
   },
   {
-    icon: Clock,
+    icon: IconClock,
     label: 'Jam Operasional',
     value: 'Senin–Sabtu 09.00–18.00 · Minggu 10.00–15.00',
     href: null,
@@ -94,7 +94,7 @@ export default function KontakPage() {
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold py-4 rounded-2xl transition-all active:scale-95 text-base shadow-md shadow-green-100"
           >
-            <MessageCircle size={22} />
+            <IconMessageCircle size={22} />
             Chat Langsung via WhatsApp
           </a>
         </div>

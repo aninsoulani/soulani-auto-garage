@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { SlidersHorizontal, ArrowUpDown, X, Search } from 'lucide-react';
+import { IconAdjustmentsHorizontal, IconArrowsUpDown, IconX, IconSearch } from '@tabler/icons-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -10,14 +10,14 @@ import VehicleGrid from '@/components/vehicles/VehicleGrid';
 import VehicleFilters, { FilterState } from '@/components/vehicles/VehicleFilters';
 import EmptyState from '@/components/shared/EmptyState';
 import Breadcrumb from '@/components/shared/Breadcrumb';
-import type { Vehicle, TransmissionType, FuelType } from '@/types/api.types';
+import type { Vehicle, TransmissionType, FuelType, CarType, VehicleQueryParams } from '@/types/api.types';
 
 // ─── Filter State ─────────────────────────────────────────────────────────────
 
 function paramsToFilters(params: URLSearchParams): FilterState {
   return {
     search: params.get('search') || '',
-    carType: params.get('carType') || '',
+    carType: (params.get('carType') as CarType) || '',
     transmission: (params.get('transmission') as TransmissionType) || '',
     fuelType: (params.get('fuelType') as FuelType) || '',
     minPrice: params.get('minPrice') || '',
@@ -51,7 +51,7 @@ function SalesContent() {
 
   const [filters, setFilters] = useState<FilterState>(() => paramsToFilters(searchParams));
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [total, setTotal] = useState(0);
+  const [activeTotal, setActiveTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -60,30 +60,42 @@ function SalesContent() {
   const fetchVehicles = useCallback(async (f: FilterState, p: number) => {
     setLoading(true);
     try {
-      const result = await getVehicles({
-        listingType: 'SALE',
-        search: f.search || undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        carType: (f.carType as any) || undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        transmission: (f.transmission as any) || undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        fuelType: (f.fuelType as any) || undefined,
-        minPrice: f.minPrice ? Number(f.minPrice) : undefined,
-        maxPrice: f.maxPrice ? Number(f.maxPrice) : undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        sort: (f.sort as any) || 'newest',
-        isFeatured: f.isFeatured || undefined,
-        isNewArrival: f.isNewArrival || undefined,
-        page: p,
-        limit: PAGE_SIZE,
-      });
+      const [result, activeResult] = await Promise.all([
+        getVehicles({
+          listingType: 'SALE',
+          search: f.search || undefined,
+          carType: f.carType || undefined,
+          transmission: f.transmission || undefined,
+          fuelType: f.fuelType || undefined,
+          minPrice: f.minPrice ? Number(f.minPrice) : undefined,
+          maxPrice: f.maxPrice ? Number(f.maxPrice) : undefined,
+          sort: (f.sort as VehicleQueryParams['sort']) || 'newest',
+          isFeatured: f.isFeatured || undefined,
+          isNewArrival: f.isNewArrival || undefined,
+          page: p,
+          limit: PAGE_SIZE,
+        }),
+        getVehicles({
+          listingType: 'SALE',
+          search: f.search || undefined,
+          carType: f.carType || undefined,
+          transmission: f.transmission || undefined,
+          fuelType: f.fuelType || undefined,
+          minPrice: f.minPrice ? Number(f.minPrice) : undefined,
+          maxPrice: f.maxPrice ? Number(f.maxPrice) : undefined,
+          isFeatured: f.isFeatured || undefined,
+          isNewArrival: f.isNewArrival || undefined,
+          status: 'ACTIVE',
+          limit: 1,
+        })
+      ]);
       const validVehicles = result.data.filter((v: Vehicle) => v.status !== 'DRAFT');
       setVehicles(validVehicles);
-      setTotal(result.meta.total);
+      setActiveTotal(activeResult.meta.total);
       setTotalPages(result.meta.totalPages);
     } catch {
       setVehicles([]);
+      setActiveTotal(0);
     } finally {
       setLoading(false);
     }
@@ -129,13 +141,9 @@ function SalesContent() {
     router.replace('/sales', { scroll: false });
   };
 
-  const availableVehicles = vehicles.filter(v => v.status === 'ACTIVE').sort((a, b) => {
-    if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
-    if (a.isNewArrival !== b.isNewArrival) return a.isNewArrival ? -1 : 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const availableVehicles = vehicles.filter(v => v.status === 'ACTIVE');
 
-  const archivedVehicles = vehicles.filter(v => v.status === 'SOLD' || v.status === 'MAINTENANCE');
+  const archivedVehicles = vehicles.filter(v => v.status === 'SOLD');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -146,7 +154,7 @@ function SalesContent() {
           <h1 className="text-2xl font-bold text-slate-900">Mobil Dijual</h1>
           {!loading && (
             <p className="text-sm text-slate-500 mt-0.5">
-              {total.toLocaleString('id-ID')} kendaraan tersedia
+              {activeTotal.toLocaleString('id-ID')} kendaraan tersedia
             </p>
           )}
         </div>
@@ -158,13 +166,13 @@ function SalesContent() {
             onClick={() => setFiltersOpen(true)}
             className="lg:hidden flex items-center gap-2"
           >
-            <SlidersHorizontal size={16} />
+            <IconAdjustmentsHorizontal size={16} />
             Filter {activeFilterCount > 0 && <span className="bg-blue-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{activeFilterCount}</span>}
           </Button>
 
           {/* Sort */}
           <div className="flex items-center gap-2">
-            <ArrowUpDown size={14} className="text-slate-400" />
+            <IconArrowsUpDown size={14} className="text-slate-400" />
             <Select value={filters.sort} onValueChange={(val) => updateFilters({ sort: val || undefined })}>
               <SelectTrigger className="w-[160px] bg-white">
                 <SelectValue placeholder="Urutkan" />
@@ -189,7 +197,7 @@ function SalesContent() {
             onChange={(e) => updateFilters({ search: e.target.value })}
             className="pl-10 bg-white"
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
         </div>
       </div>
 
@@ -199,18 +207,23 @@ function SalesContent() {
           {filters.transmission && (
             <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               {filters.transmission === 'AUTOMATIC' ? 'Otomatis' : filters.transmission}
-              <button onClick={() => updateFilters({ transmission: '' })}><X size={12} /></button>
+              <button onClick={() => updateFilters({ transmission: '' })}><IconX size={12} /></button>
             </span>
           )}
           {filters.fuelType && (
             <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               {filters.fuelType === 'GASOLINE' ? 'Bensin' : filters.fuelType}
-              <button onClick={() => updateFilters({ fuelType: '' })}><X size={12} /></button>
+              <button onClick={() => updateFilters({ fuelType: '' })}><IconX size={12} /></button>
             </span>
           )}
           {filters.isFeatured && (
             <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">
-              Pilihan Terbaik <button onClick={() => updateFilters({ isFeatured: false })}><X size={12} /></button>
+              Pilihan Terbaik <button onClick={() => updateFilters({ isFeatured: false })}><IconX size={12} /></button>
+            </span>
+          )}
+          {filters.isNewArrival && (
+            <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Baru Masuk <button onClick={() => updateFilters({ isNewArrival: false })}><IconX size={12} /></button>
             </span>
           )}
           <button
@@ -261,7 +274,7 @@ function SalesContent() {
                       <div className="w-full border-t border-gray-200" />
                     </div>
                     <div className="relative flex justify-center text-sm uppercase tracking-widest font-semibold">
-                      <span className="bg-white px-4 text-gray-500">Baru Saja Terjual / Dalam Perawatan</span>
+                      <span className="bg-white px-4 text-gray-500">Baru Saja Terjual</span>
                     </div>
                   </div>
                   <VehicleGrid
@@ -318,7 +331,7 @@ function SalesContent() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-slate-900">Filter</h2>
               <button onClick={() => setFiltersOpen(false)} className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-                <X size={16} />
+                <IconX size={16} />
               </button>
             </div>
             <VehicleFilters filters={filters} onChange={(u) => { updateFilters(u); }} />
@@ -327,7 +340,7 @@ function SalesContent() {
               size="lg"
               onClick={() => setFiltersOpen(false)}
             >
-              Tampilkan {total} Hasil
+              Tampilkan {activeTotal} Hasil
             </Button>
           </div>
         </div>

@@ -13,7 +13,6 @@ export class AnalyticsController {
    * Rate limited: 10 requests per IP per minute to prevent artificial inflation.
    */
   @Public()
-
   @Post('vehicles/:id/track-view')
   trackView(@Param('id') id: string) {
     return this.analyticsService.trackView(+id);

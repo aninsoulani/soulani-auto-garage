@@ -268,6 +268,8 @@ model RentalListing {
   weeklyRate          Decimal?  @db.Decimal(15, 2) @map("weekly_rate")
   depositAmount       Decimal   @db.Decimal(15, 2) @map("deposit_amount")
   isLongTermEligible  Boolean   @default(false) @map("is_long_term_eligible")
+  isDriverAvailable   Boolean   @default(false) @map("is_driver_available")
+  driverFeePerDay     Decimal?  @db.Decimal(15, 2) @map("driver_fee_per_day")
 
   // Audit Fields
   createdAt           DateTime  @default(now()) @map("created_at")
@@ -292,10 +294,10 @@ model Lead {
   customerPhone     String    @map("customer_phone")
   customerEmail     String?   @map("customer_email")
   type              LeadType
-  offeredPrice      Decimal?  @db.Decimal(15, 2) @map("offered_price")
   source            LeadSource?
   status            LeadStatus @default(NEW)
   message           String?    @db.Text
+  adminNotes        String?    @db.Text @map("admin_notes")
 
   // Audit Fields
   createdAt         DateTime  @default(now()) @map("created_at")
@@ -340,6 +342,7 @@ model LeadFollowup {
 
 model RentalBooking {
   id                Int           @id @default(autoincrement())
+  bookingCode       String?       @unique @map("booking_code")
   rentalListingId   Int           @map("rental_listing_id")
   
   customerName      String        @map("customer_name")
@@ -356,6 +359,7 @@ model RentalBooking {
   totalPrice        Decimal       @db.Decimal(15, 2) @map("total_price")
   status            BookingStatus @default(PENDING_PAYMENT)
   whatsappOptIn     Boolean       @default(false) @map("whatsapp_opt_in")
+  withDriver        Boolean       @default(false) @map("with_driver")
 
   // Audit Fields
   createdAt         DateTime      @default(now()) @map("created_at")

@@ -4,7 +4,7 @@ import type { Vehicle } from '@/types/api.types';
 import { formatIDR, formatMileage, getTransmissionLabel, getFuelLabel } from '@/lib/utils';
 import { getPrimaryImageUrl } from '@/lib/images';
 import VehicleBadge from './VehicleBadge';
-import { Gauge, Cog } from 'lucide-react';
+import { IconGauge, IconSettings } from '@tabler/icons-react';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -14,7 +14,7 @@ interface VehicleCardProps {
 
 export default function VehicleCard({ vehicle, variant = 'sale' }: VehicleCardProps) {
   const primaryImage = getPrimaryImageUrl(vehicle.images);
-  const href = variant === 'sale' ? `/sales/${vehicle.slug}` : `/rental/${vehicle.slug}`;
+  const href = variant === 'sale' ? `/sales/${vehicle.slug}` : `/sewa-mobil/${vehicle.slug}`;
 
   const price =
     variant === 'sale'
@@ -44,11 +44,18 @@ export default function VehicleCard({ vehicle, variant = 'sale' }: VehicleCardPr
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         {/* Badges overlay */}
-        <div className="absolute top-3 left-3 flex flex-row gap-1.5 z-20">
-          {vehicle.isFeatured && <VehicleBadge type="featured" />}
-          {vehicle.isNewArrival && <VehicleBadge type="new-arrival" />}
-          {vehicle.rentalListing?.isLongTermEligible && variant === 'rental' && (
-            <VehicleBadge type="long-term" />
+        <div className="absolute top-2 left-2 z-10 max-w-[85%] flex flex-wrap gap-1.5 items-center w-full">
+          {vehicle.isFeatured && (
+            <VehicleBadge
+              type="featured"
+              className="text-[11px] font-medium px-2 py-0.5 leading-none tracking-tight shrink-0"
+            />
+          )}
+          {vehicle.isNewArrival && (
+            <VehicleBadge
+              type="new-arrival"
+              className="text-[11px] font-medium px-2 py-0.5 leading-none tracking-tight shrink-0"
+            />
           )}
         </div>
         {/* Status overlay */}
@@ -81,7 +88,7 @@ export default function VehicleCard({ vehicle, variant = 'sale' }: VehicleCardPr
             <>
               <span className="text-slate-300">•</span>
               <span className="flex items-center gap-1">
-                <Gauge size={11} />
+                <IconGauge size={14} />
                 {formatMileage(vehicle.mileage)}
               </span>
             </>
@@ -90,7 +97,7 @@ export default function VehicleCard({ vehicle, variant = 'sale' }: VehicleCardPr
             <>
               <span className="text-slate-300">•</span>
               <span className="flex items-center gap-1">
-                <Cog size={11} />
+                <IconSettings size={14} />
                 {getTransmissionLabel(vehicle.transmission)}
               </span>
             </>

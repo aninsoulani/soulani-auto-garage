@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import type { VehicleImage } from '@/types/api.types';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { IconChevronLeft, IconChevronRight, IconX } from '@tabler/icons-react';
 
 interface VehicleGalleryProps {
   images: VehicleImage[];
@@ -58,14 +58,14 @@ export default function VehicleGallery({ images, vehicleName }: VehicleGalleryPr
               className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100"
               aria-label="Foto sebelumnya"
             >
-              <ChevronLeft size={18} className="text-slate-700" />
+              <IconChevronLeft size={18} className="text-slate-700" />
             </button>
             <button
               onClick={next}
               className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100"
               aria-label="Foto berikutnya"
             >
-              <ChevronRight size={18} className="text-slate-700" />
+              <IconChevronRight size={18} className="text-slate-700" />
             </button>
           </>
         )}
@@ -106,7 +106,7 @@ export default function VehicleGallery({ images, vehicleName }: VehicleGalleryPr
             className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
             aria-label="Tutup"
           >
-            <X size={20} />
+            <IconX size={20} />
           </button>
           <div
             className="relative w-full max-w-4xl mx-4 aspect-[4/3]"
@@ -126,13 +126,13 @@ export default function VehicleGallery({ images, vehicleName }: VehicleGalleryPr
                 onClick={(e) => { e.stopPropagation(); prev(); }}
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
               >
-                <ChevronLeft size={22} />
+                <IconChevronLeft size={22} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); next(); }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
               >
-                <ChevronRight size={22} />
+                <IconChevronRight size={22} />
               </button>
             </>
           )}

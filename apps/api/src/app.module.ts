@@ -18,6 +18,10 @@ import { ListingsModule } from './listings/listings.module';
 import { LeadsModule } from './leads/leads.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { RentalBookingsModule } from './rental-bookings/rental-bookings.module';
+import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -30,11 +34,13 @@ import { RentalBookingsModule } from './rental-bookings/rental-bookings.module';
       useFactory: () => {
         const { getThrottlerConfig } = require('./config/throttler.config');
         const config = getThrottlerConfig();
-        return [{
-          name: 'default',
-          ttl: config.global.ttl,
-          limit: config.global.limit,
-        }];
+        return [
+          {
+            name: 'default',
+            ttl: config.global.ttl,
+            limit: config.global.limit,
+          },
+        ];
       },
     }),
 
@@ -53,6 +59,10 @@ import { RentalBookingsModule } from './rental-bookings/rental-bookings.module';
     LeadsModule,
     AnalyticsModule,
     RentalBookingsModule,
+    PaymentMethodsModule,
+    UploadsModule,
+    ScheduleModule.forRoot(),
+    CronModule,
   ],
   controllers: [AppController],
   providers: [

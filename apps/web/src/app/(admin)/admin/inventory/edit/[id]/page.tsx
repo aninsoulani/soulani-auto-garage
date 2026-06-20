@@ -2,18 +2,17 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import VehicleForm from '@/components/admin/VehicleForm';
+import type { Vehicle } from '@/types/api.types';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 export default function EditVehiclePage() {
   const { id } = useParams();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<Partial<Vehicle> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiFetch(`/vehicles/${id}`).then((res: any) => {
+    apiFetch<Vehicle>(`/vehicles/${id}`).then((res) => {
       setData(res);
       setLoading(false);
     }).catch((err) => {

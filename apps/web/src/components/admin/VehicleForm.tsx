@@ -9,8 +9,9 @@ import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import ImageUploaderTab from './ImageUploaderTab';
 import PricingTab from './PricingTab';
-import { AlertCircle } from 'lucide-react';
+import { IconAlertCircle } from '@tabler/icons-react';
 import InspectionTab from './InspectionTab';
+import type { Vehicle } from '@/types/api.types';
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,8 @@ const baseSchema = z.object({
   rentalDailyRate: z.number().optional().nullable(),
   rentalDepositAmount: z.number().optional().nullable(),
   rentalIsLongTermEligible: z.boolean().optional().nullable(),
+  rentalIsDriverAvailable: z.boolean().optional(),
+  rentalDriverFeePerDay: z.number().optional().nullable(),
 
   inspectionDate: z.string().optional().nullable(),
   inspectorName: z.string().optional().nullable(),
@@ -89,10 +92,9 @@ const getVehicleSchema = (isEditMode: boolean) => baseSchema.superRefine((data, 
   }
 });
 
-type VehicleFormValues = z.infer<typeof baseSchema>;
+export type VehicleFormValues = z.infer<typeof baseSchema>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function VehicleForm({ initialData, vehicleId }: { initialData?: any, vehicleId?: string }) {
+export default function VehicleForm({ initialData, vehicleId }: { initialData?: Partial<Vehicle>, vehicleId?: string }) {
   const [activeTab, setActiveTab] = useState('core');
   const { accessToken } = useAuthStore();
   const router = useRouter();
@@ -152,15 +154,14 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
   };
 
   const form = useForm<VehicleFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(getVehicleSchema(!!vehicleId) as any),
+    resolver: zodResolver(getVehicleSchema(!!vehicleId)),
     defaultValues: {
       make: initialData?.make || '',
       model: initialData?.model || '',
       year: initialData?.year || new Date().getFullYear(),
       color: initialData?.color || '',
       listingType: initialData?.listingType || 'SALE',
-      status: initialData?.status || 'ACTIVE',
+      status: (initialData?.status === 'DRAFT' ? 'ACTIVE' : initialData?.status) || 'ACTIVE',
       vin: initialData?.vin || '',
       plateNumber: initialData?.plateNumber || '',
       chassisNumber: initialData?.chassisNumber || '',
@@ -178,6 +179,8 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
       rentalDailyRate: initialData?.rentalListing?.dailyRate ? Number(initialData.rentalListing.dailyRate) : 0,
       rentalDepositAmount: initialData?.rentalListing?.depositAmount ? Number(initialData.rentalListing.depositAmount) : 0,
       rentalIsLongTermEligible: initialData?.rentalListing?.isLongTermEligible || false,
+      rentalIsDriverAvailable: initialData?.rentalListing?.isDriverAvailable || false,
+      rentalDriverFeePerDay: initialData?.rentalListing?.driverFeePerDay ? Number(initialData.rentalListing.driverFeePerDay) : 0,
 
       inspectionDate: initialData?.inspections?.[0]?.inspectionDate ? new Date(initialData.inspections[0].inspectionDate).toISOString().split('T')[0] : '',
       inspectorName: initialData?.inspections?.[0]?.inspectorName || '',
@@ -202,7 +205,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
       setValue('rentalDailyRate', 0);
       setValue('rentalDepositAmount', 0);
       setValue('rentalIsLongTermEligible', false);
-      clearErrors(['rentalDailyRate', 'rentalDepositAmount', 'rentalIsLongTermEligible']);
+      clearErrors(['rentalDailyRate', 'rentalDepositAmount', 'rentalIsLongTermEligible', 'rentalIsDriverAvailable', 'rentalDriverFeePerDay']);
     } else if (currentListingType === 'RENTAL') {
       setValue('salesPrice', 0);
       setValue('salesPreviousOwners', 0);
@@ -214,8 +217,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
     try {
       if (vehicleId) {
         // Verify image count before allowing save
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const existingVehicle = await apiFetch(`/vehicles/${vehicleId}`) as any;
+        const existingVehicle = await apiFetch<Vehicle>(`/vehicles/${vehicleId}`);
         if (existingVehicle && (!existingVehicle.images || existingVehicle.images.length === 0)) {
           // Fallback logic for edit mode if required
           setActiveTab('images');
@@ -242,6 +244,8 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
           rentalDailyRate: data.rentalDailyRate,
           rentalDepositAmount: data.rentalDepositAmount,
           rentalIsLongTermEligible: data.rentalIsLongTermEligible,
+          rentalIsDriverAvailable: data.rentalIsDriverAvailable,
+          rentalDriverFeePerDay: data.rentalDriverFeePerDay,
           inspectionDate: data.inspectionDate,
           inspectorName: data.inspectorName,
           inspectionEngineStatus: data.inspectionEngineStatus,
@@ -287,7 +291,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         if (['RENTAL', 'BOTH'].includes(data.listingType)) {
           await apiFetch(`/vehicles/${savedVehicleId}/rental-listing`, {
             method: 'PUT',
-            body: JSON.stringify({ dailyRate: data.rentalDailyRate || 0, depositAmount: data.rentalDepositAmount || 0, isLongTermEligible: data.rentalIsLongTermEligible || false }),
+            body: JSON.stringify({ dailyRate: data.rentalDailyRate || 0, depositAmount: data.rentalDepositAmount || 0, isLongTermEligible: data.rentalIsLongTermEligible || false, isDriverAvailable: data.rentalIsDriverAvailable || false, driverFeePerDay: data.rentalDriverFeePerDay || 0 }),
             token: accessToken || undefined
           });
         }
@@ -332,11 +336,10 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
         router.push('/admin/inventory');
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+    } catch (err: unknown) {
       Swal.fire({
         title: 'Error!',
-        text: err.message || 'Error saving vehicle',
+        text: err instanceof Error ? err.message : 'Error saving vehicle',
         icon: 'error',
         confirmButtonColor: '#2563eb'
       });
@@ -344,7 +347,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
   };
 
   const coreErrorKeys = ['make', 'model', 'year', 'color', 'listingType', 'status', 'plateNumber', 'vin', 'chassisNumber', 'engineNumber', 'mileage', 'transmission', 'fuelType', 'description'];
-  const pricingErrorKeys = ['salesPrice', 'rentalDailyRate', 'rentalDepositAmount'];
+  const pricingErrorKeys = ['salesPrice', 'rentalDailyRate', 'rentalDepositAmount', 'rentalDriverFeePerDay'];
   const inspectionErrorKeys = ['inspectionDate', 'inspectorName', 'inspectionEngineStatus', 'inspectionTransmissionStatus', 'inspectionSuspensionStatus', 'inspectionElectricalStatus', 'inspectionAcStatus', 'inspectionTiresStatus', 'inspectionInteriorStatus', 'inspectionExteriorStatus', 'inspectionGeneralNotes'];
   const imageErrorKeys = ['images'];
 
@@ -353,8 +356,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
   const hasInspectionErrors = inspectionErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
   const hasImageErrors = imageErrorKeys.some(k => errors[k as keyof VehicleFormValues]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onError = (formErrors: any) => {
+  const onError = (formErrors: Record<string, unknown>) => {
     // Strict priority: Core -> Images -> Inspections -> Pricing
     const errorSequence = [
       { tab: 'core', keys: coreErrorKeys },
@@ -380,28 +382,28 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
             onClick={() => setActiveTab('core')}
             className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'core' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Core Details {hasCoreErrors && <span title="Contains errors"><AlertCircle className="text-red-500 w-4 h-4" /></span>}
+            Core Details {hasCoreErrors && <span title="Contains errors"><IconAlertCircle className="text-red-500 w-4 h-4" /></span>}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('images')}
             className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'images' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Images {hasImageErrors && <span title="Contains errors"><AlertCircle className="text-red-500 w-4 h-4" /></span>}
+            Images {hasImageErrors && <span title="Contains errors"><IconAlertCircle className="text-red-500 w-4 h-4" /></span>}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('inspections')}
             className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'inspections' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Inspections {hasInspectionErrors && <span title="Contains errors"><AlertCircle className="text-red-500 w-4 h-4" /></span>}
+            Inspections {hasInspectionErrors && <span title="Contains errors"><IconAlertCircle className="text-red-500 w-4 h-4" /></span>}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('pricing')}
             className={`px-6 py-4 font-medium transition flex items-center gap-2 ${activeTab === 'pricing' ? 'border-b-2 border-blue-600 text-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Pricing Settings {hasPricingErrors && <span title="Contains errors"><AlertCircle className="text-red-500 w-4 h-4" /></span>}
+            Pricing Settings {hasPricingErrors && <span title="Contains errors"><IconAlertCircle className="text-red-500 w-4 h-4" /></span>}
           </button>
         </div>
 

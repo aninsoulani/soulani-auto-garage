@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { IconCircleCheck } from '@tabler/icons-react';
 
 interface LeadSuccessStateProps {
   refId: string;
@@ -20,7 +20,7 @@ export default function LeadSuccessState({ refId, whatsappUrl, vehicleName }: Le
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-4">
       {/* Animated checkmark */}
       <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center animate-bounce">
-        <CheckCircle size={36} className="text-emerald-500" />
+        <IconCircleCheck size={36} className="text-emerald-500" />
       </div>
 
       <div>

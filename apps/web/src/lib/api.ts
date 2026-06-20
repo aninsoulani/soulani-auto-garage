@@ -5,6 +5,10 @@ import type {
   VehicleQueryParams,
   CreateLeadPayload,
   CreateLeadResponse,
+  Lead,
+  RentalBooking,
+  BlackoutDate,
+  PaymentMethod
 } from '@/types/api.types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
@@ -54,7 +58,7 @@ export async function apiFetch<T>(
   return json.data !== undefined && json.statusCode !== undefined ? json.data : json;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function buildQueryString(params: Record<string, unknown>): string {
   const entries = Object.entries(params)
@@ -63,7 +67,7 @@ function buildQueryString(params: Record<string, unknown>): string {
   return entries.length ? `?${entries.join('&')}` : '';
 }
 
-// ─── Public: Vehicles ─────────────────────────────────────────────────────────
+// ─── Public: Vehicles ────────────────────────────────────────────────────────
 
 /** Fetch a paginated list of vehicles with optional filters. */
 export async function getVehicles(
@@ -76,6 +80,13 @@ export async function getVehicles(
 /** Fetch a single vehicle by its immutable slug (for the public VDP). */
 export async function getVehicleBySlug(slug: string): Promise<Vehicle> {
   return apiFetch<Vehicle>(`/vehicles/by-slug/${encodeURIComponent(slug)}`, {
+    cache: 'no-store',
+  });
+}
+
+/** Fetch vehicle availability blackout dates and bookings */
+export async function getVehicleAvailability(id: number): Promise<{ unavailableIntervals: Array<{ start: string; end: string }> }> {
+  return apiFetch<{ unavailableIntervals: Array<{ start: string; end: string }> }>(`/vehicles/${id}/availability`, {
     cache: 'no-store',
   });
 }
@@ -105,6 +116,14 @@ export async function submitLead(payload: CreateLeadPayload): Promise<CreateLead
   });
 }
 
+/** Submit a standard rental booking. */
+export async function submitRentalBooking(payload: Record<string, unknown>): Promise<{ bookingId: number; bookingCode: string; totalPrice: string; paymentInstructions: string; status: string }> {
+  return apiFetch('/rental-bookings', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
 // ─── Public: Analytics ────────────────────────────────────────────────────────
 
 /** Fire-and-forget view tracking for a vehicle detail page. */
@@ -114,6 +133,48 @@ export async function trackVehicleView(vehicleId: number): Promise<void> {
   } catch {
     // Silently ignore — analytics must never affect user experience
   }
+}
+
+// ─── Public: Payment Methods & Uploads ────────────────────────────────────────
+
+export async function getPaymentMethods(): Promise<PaymentMethod[]> {
+  return apiFetch<PaymentMethod[]>('/payment-methods', { cache: 'no-store' });
+}
+
+export async function uploadLicense(file: File): Promise<{ filePath: string; fileUrl: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_URL}/uploads/license`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || `Upload failed with status ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data !== undefined ? json.data : json;
+}
+
+export async function uploadGeneralReceipt(file: File): Promise<{ filePath: string; fileUrl: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_URL}/uploads/receipt`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || `Upload failed with status ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data !== undefined ? json.data : json;
 }
 
 // ─── Public: Testimonials ────────────────────────────────────────────────────
@@ -131,4 +192,90 @@ export async function getTestimonials(): Promise<Testimonial[]> {
   } catch {
     return [];
   }
+}
+
+// ─── Admin API Methods ────────────────────────────────────────────────────────
+
+export async function getAdminLeads(params: Record<string, unknown> = {}, token: string): Promise<PaginatedResponse<Lead>> {
+  const qs = buildQueryString(params);
+  return apiFetch(`/leads${qs}`, { token });
+}
+
+export async function getAdminRentalBookings(params: Record<string, unknown> = {}, token: string): Promise<PaginatedResponse<RentalBooking>> {
+  const qs = buildQueryString(params);
+  return apiFetch(`/rental-bookings${qs}`, { token });
+}
+
+export async function updateRentalBookingStatus(id: number, status: string, token: string): Promise<unknown> {
+  return apiFetch(`/rental-bookings/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+    token,
+  });
+}
+
+// ─── Admin: Payment Methods ───────────────────────────────────────────────────
+
+export async function getAdminPaymentMethods(token: string): Promise<PaymentMethod[]> {
+  return apiFetch<PaymentMethod[]>('/payment-methods/admin', { token, cache: 'no-store' });
+}
+
+export async function createPaymentMethod(data: Partial<PaymentMethod>, token: string): Promise<PaymentMethod> {
+  return apiFetch<PaymentMethod>('/payment-methods', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function updatePaymentMethod(id: number, data: Partial<PaymentMethod>, token: string): Promise<PaymentMethod> {
+  return apiFetch<PaymentMethod>(`/payment-methods/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    token,
+  });
+}
+
+export async function deletePaymentMethod(id: number, token: string): Promise<unknown> {
+  return apiFetch(`/payment-methods/${id}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
+export async function getVehicleBlackoutDates(vehicleId: number, token: string): Promise<BlackoutDate[]> {
+  return apiFetch(`/vehicles/${vehicleId}/blackout-dates`, { token });
+}
+
+export async function addBlackoutDate(vehicleId: number, payload: Record<string, unknown>, token: string): Promise<unknown> {
+  return apiFetch(`/vehicles/${vehicleId}/blackout-dates`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    token,
+  });
+}
+
+export async function removeBlackoutDate(vehicleId: number, blackoutDateId: number, token: string): Promise<unknown> {
+  return apiFetch(`/vehicles/${vehicleId}/blackout-dates/${blackoutDateId}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
+export async function updateBookingPaperwork(id: number, formData: FormData, token: string): Promise<unknown> {
+  const res = await fetch(`${API_URL}/rental-bookings/${id}/paperwork`, {
+    method: 'PATCH',
+    body: formData,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || `Upload failed with status ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data !== undefined && json.statusCode !== undefined ? json.data : json;
 }

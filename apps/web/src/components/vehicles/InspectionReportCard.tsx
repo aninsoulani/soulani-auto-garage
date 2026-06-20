@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import type { VehicleInspection } from '@/types/api.types';
 import { getInspectionStatusMeta, formatDate } from '@/lib/utils';
-import { ChevronDown, ShieldCheck, Check, X, AlertTriangle, HelpCircle } from 'lucide-react';
+import { IconChevronDown, IconShieldCheck, IconCheck, IconX, IconAlertTriangle, IconHelp } from '@tabler/icons-react';
 
 interface InspectionItem {
   label: string;
@@ -51,7 +51,7 @@ export default function InspectionReportCard({ inspection }: InspectionReportCar
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shrink-0">
-            <ShieldCheck size={20} className="text-white" />
+            <IconShieldCheck size={20} className="text-white" />
           </div>
           <div>
             <p className="font-bold text-slate-900 text-sm">Laporan Inspeksi</p>
@@ -60,11 +60,10 @@ export default function InspectionReportCard({ inspection }: InspectionReportCar
             </p>
           </div>
         </div>
-        <ChevronDown
+        <IconChevronDown
           size={18}
-          className={`text-slate-400 transition-transform duration-200 ${
-            expanded ? 'rotate-180' : ''
-          }`}
+          className={`text-slate-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''
+            }`}
         />
       </button>
 
@@ -75,7 +74,7 @@ export default function InspectionReportCard({ inspection }: InspectionReportCar
             {INSPECTION_ITEMS.map(({ label, key }) => {
               const status = inspection[key];
               const meta = getInspectionStatusMeta(status);
-              const IconComponent = meta.icon === 'check' ? Check : meta.icon === 'x' ? X : meta.icon === 'alert-triangle' ? AlertTriangle : HelpCircle;
+              const IconComponent = meta.icon === 'check' ? IconCheck : meta.icon === 'x' ? IconX : meta.icon === 'alert-triangle' ? IconAlertTriangle : IconHelp;
               return (
                 <div
                   key={key}

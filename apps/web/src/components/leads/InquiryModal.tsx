@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { IconX } from '@tabler/icons-react';
 import InquiryForm from './InquiryForm';
 
 interface InquiryModalProps {
@@ -28,7 +28,7 @@ export default function InquiryModal({ vehicleId, vehicleName, listingType, onCl
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-colors"
           >
-            <X size={16} className="text-slate-600" />
+            <IconX size={16} className="text-slate-600" />
           </button>
         </div>
         

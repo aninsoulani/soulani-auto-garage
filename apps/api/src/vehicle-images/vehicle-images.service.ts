@@ -9,7 +9,11 @@ export class VehicleImagesService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async uploadImage(vehicleId: number, file: Express.Multer.File, userId: number) {
+  async uploadImage(
+    vehicleId: number,
+    file: Express.Multer.File,
+    userId: number,
+  ) {
     const fileUrl = `/uploads/vehicles/${file.filename}`;
     const filePath = file.path;
 
@@ -51,7 +55,9 @@ export class VehicleImagesService {
     });
 
     if (!existing) {
-      throw new NotFoundException(`Image with ID ${imageId} not found for vehicle ${vehicleId}`);
+      throw new NotFoundException(
+        `Image with ID ${imageId} not found for vehicle ${vehicleId}`,
+      );
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -88,7 +94,9 @@ export class VehicleImagesService {
     });
 
     if (!existing) {
-      throw new NotFoundException(`Image with ID ${imageId} not found for vehicle ${vehicleId}`);
+      throw new NotFoundException(
+        `Image with ID ${imageId} not found for vehicle ${vehicleId}`,
+      );
     }
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -126,7 +134,10 @@ export class VehicleImagesService {
 
     // Asynchronous physical file cleanup
     fs.unlink(existing.filePath).catch((err) => {
-      this.logger.error(`Failed to delete physical file for image ${imageId} at ${existing.filePath}`, err.stack);
+      this.logger.error(
+        `Failed to delete physical file for image ${imageId} at ${existing.filePath}`,
+        err.stack,
+      );
     });
 
     return result;
@@ -134,22 +145,25 @@ export class VehicleImagesService {
 
   async reorderImages(vehicleId: number, imageIds: number[], userId: number) {
     return this.prisma.$transaction(async (tx) => {
-      const updates = imageIds.map((id, index) => 
+      const updates = imageIds.map((id, index) =>
         tx.vehicleImage.updateMany({
           where: { id, vehicleId },
-          data: { sortOrder: index }
-        })
+          data: { sortOrder: index },
+        }),
       );
-      
+
       await Promise.all(updates);
-      
+
       await tx.auditLog.create({
         data: {
           userId,
           action: AuditAction.UPDATE,
           moduleName: 'VehicleImages',
           recordId: vehicleId,
-          newValue: { message: `Reordered ${imageIds.length} images`, imageIds },
+          newValue: {
+            message: `Reordered ${imageIds.length} images`,
+            imageIds,
+          },
         },
       });
 

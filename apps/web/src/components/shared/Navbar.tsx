@@ -2,12 +2,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, MessageCircle, Car } from 'lucide-react';
+import { IconMenu2, IconX, IconMessageCircle, IconCar } from '@tabler/icons-react';
 import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
 
 const NAV_LINKS = [
   { href: '/sales', label: 'Beli Mobil' },
-  { href: '/rental', label: 'Sewa Mobil' },
+  { href: '/sewa-mobil', label: 'Sewa Mobil' },
   { href: '/tentang-kami', label: 'Tentang Kami' },
   { href: '/kontak', label: 'Kontak' },
 ];
@@ -38,7 +38,7 @@ export default function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Car size={18} className="text-white" />
+                <IconCar size={18} className="text-white" />
               </div>
               <span className="text-base font-bold text-slate-900 leading-tight">
                 Soulani<br />
@@ -77,7 +77,7 @@ export default function Navbar() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-150 active:scale-95"
               >
-                <MessageCircle size={16} />
+                <IconMessageCircle size={16} />
                 Chat Sekarang
               </a>
             </div>
@@ -88,7 +88,7 @@ export default function Navbar() {
               className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
               aria-label="Toggle menu"
             >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              {menuOpen ? <IconX size={22} /> : <IconMenu2 size={22} />}
             </button>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function Navbar() {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white text-sm font-semibold px-4 py-3 rounded-xl"
               >
-                <MessageCircle size={18} />
+                <IconMessageCircle size={18} />
                 Chat via WhatsApp
               </a>
             </div>

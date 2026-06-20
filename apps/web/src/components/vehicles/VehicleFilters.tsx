@@ -1,11 +1,11 @@
-import type { TransmissionType, FuelType } from '@/types/api.types';
+import type { TransmissionType, FuelType, CarType } from '@/types/api.types';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export interface FilterState {
   search: string;
-  carType: string;
+  carType: CarType | '';
   transmission: TransmissionType | '';
   fuelType: FuelType | '';
   minPrice: string;
@@ -28,7 +28,7 @@ export default function VehicleFilters({ filters, onChange }: VehicleFiltersProp
         <p className="font-semibold text-slate-800 mb-2">Tipe Mobil</p>
         <Select 
           value={filters.carType || "all"} 
-          onValueChange={(val) => onChange({ carType: val === "all" ? "" : (val || undefined) })}
+          onValueChange={(val) => onChange({ carType: val === "all" ? "" : (val as CarType) })}
         >
           <SelectTrigger className="w-full bg-white">
             <SelectValue placeholder="Semua Tipe" />

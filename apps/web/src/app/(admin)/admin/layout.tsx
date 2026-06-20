@@ -1,15 +1,16 @@
 'use client';
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Menu, LayoutDashboard, Car, Users, LogOut, ChevronDown, Settings } from 'lucide-react';
+import { IconMenu2, IconDashboard, IconCar, IconUsers, IconLogout, IconChevronDown, IconSettings, IconCalendarEvent, IconCreditCard } from '@tabler/icons-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiFetch } from '@/lib/api';
+import type { User } from '@/types/api.types';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -27,28 +28,30 @@ const profileSchema = z.object({
   path: ["confirmPassword"]
 });
 
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, accessToken, clearAuth } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [dbUser, setDbUser] = useState<any>(null);
+  const [dbUser, setDbUser] = useState<User | null>(null);
 
   // Modal State
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState('');
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       if (!accessToken) return;
-      const res = await apiFetch<any>('/auth/profile', { token: accessToken });
+      const res = await apiFetch<User>('/auth/profile', { token: accessToken });
       setDbUser(res);
     } catch (e) {
       console.error('Failed to fetch profile', e);
     }
-  };
+  }, [accessToken]);
 
   useEffect(() => {
     setMounted(true);
@@ -60,10 +63,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } else if (mounted && user) {
       fetchProfile();
     }
-  }, [mounted, user, router]);
+  }, [mounted, user, router, fetchProfile]);
 
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
-    resolver: zodResolver(profileSchema as any),
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
     defaultValues: { name: '', password: '', confirmPassword: '' }
   });
 
@@ -75,11 +78,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [dbUser, reset]);
 
-  const onSubmitProfile = async (data: any) => {
+  const onSubmitProfile = async (data: ProfileFormValues) => {
     setIsUpdating(true);
     setUpdateError('');
     try {
-      const payload: any = { name: data.name };
+      const payload: Record<string, string> = { name: data.name };
       if (data.password) {
         payload.password = data.password;
       }
@@ -91,8 +94,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       await fetchProfile();
       setProfileModalOpen(false);
       // Optional: Show success toast here if you have a toast provider
-    } catch (e: any) {
-      setUpdateError(e.message || 'Update failed');
+    } catch (e: unknown) {
+      setUpdateError((e as Error).message || 'Update failed');
     } finally {
       setIsUpdating(false);
     }
@@ -108,20 +111,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className={`h-16 flex items-center border-b border-slate-800 ${collapsed ? 'justify-center' : 'justify-between px-6'}`}>
           {!collapsed && <span className="text-lg font-bold tracking-tight">Soulani Auto Garage</span>}
           <button onClick={() => setCollapsed(!collapsed)} className="p-2 hover:bg-slate-800 rounded-lg transition text-slate-400 hover:text-white shrink-0">
-            <Menu size={20} />
-          </button>
+            {collapsed ? <IconMenu2 size={24} /> : <IconMenu2 size={24} />}       </button>
         </div>
         <nav className="flex-1 py-6 space-y-2 px-3 overflow-y-auto">
           <Link href="/admin/dashboard" title="Dashboard" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname === '/admin/dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <LayoutDashboard size={20} className="shrink-0" />
+            <IconDashboard size={20} className="shrink-0" />
             {!collapsed && <span className="font-medium text-sm">Dashboard</span>}
           </Link>
           <Link href="/admin/inventory" title="Inventory" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/inventory') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <Car size={20} className="shrink-0" />
+            <IconCar size={20} className="shrink-0" />
             {!collapsed && <span className="font-medium text-sm">Inventory</span>}
           </Link>
+          <Link href="/admin/rentals" title="Rentals" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/rentals') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+            <IconCalendarEvent size={20} className="shrink-0" />
+            {!collapsed && <span className="font-medium text-sm">Rentals</span>}
+          </Link>
+          <Link href="/admin/settings/payment-methods" title="Payment Methods" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/settings/payment-methods') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+            <IconCreditCard size={20} className="shrink-0" />
+            {!collapsed && <span className="font-medium text-sm">Payment Methods</span>}
+          </Link>
           <Link href="/admin/crm" title="CRM Leads" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/crm') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <Users size={20} className="shrink-0" />
+            <IconUsers size={20} className="shrink-0" />
             {!collapsed && <span className="font-medium text-sm">CRM Leads</span>}
           </Link>
         </nav>
@@ -140,7 +150,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="w-9 h-9 bg-blue-100 text-blue-600 font-bold rounded-full flex items-center justify-center shrink-0 border border-blue-200 shadow-sm">
                 {dbUser?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <ChevronDown size={16} className="text-gray-400" />
+              <IconChevronDown size={16} className="text-gray-400" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <div className="px-2 py-2 border-b border-gray-100 sm:hidden">
@@ -148,14 +158,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <p className="text-xs text-gray-500">{dbUser?.role}</p>
               </div>
               <DropdownMenuItem className="cursor-pointer" onClick={() => setProfileModalOpen(true)}>
-                <Settings size={16} className="mr-2" />
+                <IconSettings size={16} className="mr-2" />
                 <span>Change Details</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700"
                 onClick={() => { clearAuth(); router.push('/login'); }}
               >
-                <LogOut size={16} className="mr-2" />
+                <IconLogout size={16} className="mr-2" />
                 <span>Sign out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -8,7 +8,11 @@ import { AuditAction } from '@prisma/client';
 export class VehicleInspectionsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(vehicleId: number, createInspectionDto: CreateInspectionDto, userId: number) {
+  async create(
+    vehicleId: number,
+    createInspectionDto: CreateInspectionDto,
+    userId: number,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const inspection = await tx.vehicleInspection.create({
         data: {
@@ -52,12 +56,18 @@ export class VehicleInspectionsService {
     return inspection;
   }
 
-  async update(id: number, vehicleId: number, updateInspectionDto: UpdateInspectionDto, userId: number) {
+  async update(
+    id: number,
+    vehicleId: number,
+    updateInspectionDto: UpdateInspectionDto,
+    userId: number,
+  ) {
     const existing = await this.findOne(id, vehicleId);
 
     return this.prisma.$transaction(async (tx) => {
       const data: any = { ...updateInspectionDto };
-      if (data.inspectionDate) data.inspectionDate = new Date(data.inspectionDate);
+      if (data.inspectionDate)
+        data.inspectionDate = new Date(data.inspectionDate);
 
       const inspection = await tx.vehicleInspection.update({
         where: { id },

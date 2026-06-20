@@ -1,6 +1,20 @@
-import { IsOptional, IsEnum, IsInt, Min, IsString, IsBoolean, IsNumber } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsInt,
+  Min,
+  IsString,
+  IsBoolean,
+  IsNumber,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { VehicleStatus, ListingType, TransmissionType, FuelType, CarType } from '@prisma/client';
+import {
+  VehicleStatus,
+  ListingType,
+  TransmissionType,
+  FuelType,
+  CarType,
+} from '@prisma/client';
 
 export class QueryVehicleDto {
   @IsOptional()
@@ -78,4 +92,10 @@ export class QueryVehicleDto {
   @IsOptional()
   @IsString()
   sort?: string;
+
+  /** Filter by driver availability */
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  withDriver?: boolean;
 }

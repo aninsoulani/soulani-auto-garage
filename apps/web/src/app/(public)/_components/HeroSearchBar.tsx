@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search } from 'lucide-react';
+import { IconSearch } from '@tabler/icons-react';
 
 export default function HeroSearchBar() {
   const [query, setQuery] = useState('');
@@ -20,7 +20,7 @@ export default function HeroSearchBar() {
       className="flex items-center gap-2 bg-white rounded-2xl p-2 shadow-xl max-w-xl mx-auto"
       role="search"
     >
-      <Search size={18} className="text-slate-400 ml-2 shrink-0" />
+      <IconSearch size={18} className="text-slate-400 ml-2 shrink-0" />
       <input
         type="search"
         value={query}

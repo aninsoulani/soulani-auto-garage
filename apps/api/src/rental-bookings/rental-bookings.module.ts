@@ -4,6 +4,6 @@ import { RentalBookingsController } from './rental-bookings.controller';
 
 @Module({
   providers: [RentalBookingsService],
-  controllers: [RentalBookingsController]
+  controllers: [RentalBookingsController],
 })
 export class RentalBookingsModule {}

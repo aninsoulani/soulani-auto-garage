@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ShieldCheck, Zap, Heart, Award, MapPin, Clock } from 'lucide-react';
+import { IconShieldCheck, IconBolt, IconHeart, IconAward, IconMapPin, IconClock } from '@tabler/icons-react';
 import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
 
 /**
@@ -24,19 +24,19 @@ export const metadata: Metadata = {
 
 const PILLARS = [
   {
-    icon: ShieldCheck,
+    icon: IconShieldCheck,
     title: 'Transparansi Penuh',
     desc: 'Setiap kendaraan dilengkapi dengan laporan inspeksi lengkap. Tidak ada yang disembunyikan.',
     color: 'text-blue-600 bg-blue-50',
   },
   {
-    icon: Zap,
+    icon: IconBolt,
     title: 'Proses Cepat',
     desc: 'Dari pertanyaan hingga serah terima, kami memastikan prosesnya semudah dan secepat mungkin.',
     color: 'text-amber-600 bg-amber-50',
   },
   {
-    icon: Heart,
+    icon: IconHeart,
     title: 'Pelayanan Tulus',
     desc: 'Tim kami adalah para pecinta otomotif yang benar-benar ingin membantu Anda menemukan mobil yang tepat.',
     color: 'text-rose-600 bg-rose-50',
@@ -137,20 +137,20 @@ export default function AboutPage() {
       <section className="max-w-4xl mx-auto px-4 py-16">
         <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12">
           <div className="flex items-center gap-3 mb-6">
-            <Award size={28} className="text-blue-400" />
+            <IconAward size={28} className="text-blue-400" />
             <h2 className="text-2xl font-bold">Kunjungi Showroom Kami</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div className="flex gap-3 items-start">
-                <MapPin size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                <IconMapPin size={18} className="text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-sm">Alamat</p>
                   <p className="text-slate-400 text-sm mt-0.5">Jakarta, Indonesia</p>
                 </div>
               </div>
               <div className="flex gap-3 items-start">
-                <Clock size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                <IconClock size={18} className="text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-sm">Jam Operasional</p>
                   <p className="text-slate-400 text-sm mt-0.5">Senin – Sabtu: 09.00 – 18.00</p>

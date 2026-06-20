@@ -7,7 +7,7 @@ import type { LeadType, LeadSource } from '@/types/api.types';
 import { LEAD_TYPE_LABELS } from '@/lib/utils';
 import { submitLead } from '@/lib/api';
 import LeadSuccessState from './LeadSuccessState';
-import { Loader2, MessageCircle } from 'lucide-react';
+import { IconLoader2, IconMessageCircle } from '@tabler/icons-react';
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -15,39 +15,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
-// ─── Zod Schema ──────────────────────────────────────────────────────────────
-
-const inquirySchema = z
-  .object({
-    customerName: z.string().min(2, 'Nama minimal 2 karakter').max(100),
-    customerPhone: z
-      .string()
-      .regex(/^(\+62|62|0)8[1-9][0-9]{6,10}$/, 'Format nomor HP tidak valid (contoh: 08123456789)'),
-    customerEmail: z.string().email('Email tidak valid').optional().or(z.literal('')),
-    type: z.enum([
-      'SALES_INQUIRY',
-      'TEST_DRIVE_REQUEST',
-      'MAKE_OFFER',
-      'RENTAL_INQUIRY',
-      'LONG_TERM_QUOTE',
-    ] as const),
-    offeredPrice: z.string().optional(),
-    message: z.string().max(500).optional(),
-    source: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.type === 'MAKE_OFFER') {
-        const val = parseFloat(data.offeredPrice ?? '');
-        return !isNaN(val) && val > 0;
-      }
-      return true;
-    },
-    {
-      message: 'Harga penawaran wajib diisi dan harus lebih dari 0',
-      path: ['offeredPrice'],
-    },
-  );
+const inquirySchema = z.object({
+  customerName: z.string().min(2, 'Nama minimal 2 karakter').max(100),
+  customerPhone: z
+    .string()
+    .regex(/^(\+62|62|0)8[1-9][0-9]{6,10}$/, 'Format nomor HP tidak valid (contoh: 08123456789)'),
+  customerEmail: z.string().email('Email tidak valid').optional().or(z.literal('')),
+  type: z.enum([
+    'SALES_INQUIRY',
+    'TEST_DRIVE_REQUEST',
+    'RENTAL_INQUIRY',
+    'LONG_TERM_QUOTE',
+  ] as const),
+  message: z.string().max(500).optional(),
+  source: z.string().optional(),
+});
 
 type InquiryFormData = z.infer<typeof inquirySchema>;
 
@@ -83,7 +65,7 @@ export default function InquiryForm({
   // Filter options based on listingType
   const allowedTypes: LeadType[] = [];
   if (['SALE', 'BOTH'].includes(listingType)) {
-    allowedTypes.push('SALES_INQUIRY', 'TEST_DRIVE_REQUEST', 'MAKE_OFFER');
+    allowedTypes.push('SALES_INQUIRY', 'TEST_DRIVE_REQUEST');
   }
   if (['RENTAL', 'BOTH'].includes(listingType)) {
     allowedTypes.push('RENTAL_INQUIRY', 'LONG_TERM_QUOTE');
@@ -96,21 +78,17 @@ export default function InquiryForm({
   const actualDefaultType = defaultType || (listingType === 'RENTAL' ? 'RENTAL_INQUIRY' : 'SALES_INQUIRY');
 
   const form = useForm<InquiryFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(inquirySchema as any),
+    resolver: zodResolver(inquirySchema),
     defaultValues: { 
-      type: actualDefaultType as LeadType, 
+      type: actualDefaultType as 'SALES_INQUIRY' | 'TEST_DRIVE_REQUEST' | 'RENTAL_INQUIRY' | 'LONG_TERM_QUOTE', 
       source,
       customerName: '',
       customerPhone: '',
       customerEmail: '',
-      offeredPrice: '',
       message: ''
     },
   });
 
-  const watchedType = form.watch('type');
-  const showOfferedPrice = watchedType === 'MAKE_OFFER';
   const isSubmitting = form.formState.isSubmitting;
 
   const onSubmit = async (data: InquiryFormData) => {
@@ -122,9 +100,6 @@ export default function InquiryForm({
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         customerEmail: data.customerEmail || undefined,
-        offeredPrice: showOfferedPrice && data.offeredPrice
-          ? parseFloat(data.offeredPrice)
-          : undefined,
         message: data.message || undefined,
         source: (data.source as LeadSource) || source,
       });
@@ -133,9 +108,8 @@ export default function InquiryForm({
       setWaUrl(result.whatsappRedirectUrl);
       setSubmitted(true);
       onSuccess?.(result.leadReferenceId, result.whatsappRedirectUrl);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      const msg = err?.message || 'Terjadi kesalahan. Silakan coba lagi.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
       if (msg.includes('429') || msg.toLowerCase().includes('too many')) {
         setServerError('Terlalu banyak percobaan. Silakan coba lagi dalam 1 jam.');
       } else {
@@ -223,26 +197,7 @@ export default function InquiryForm({
           )}
         />
 
-        <div className={`transition-all duration-200 overflow-hidden ${showOfferedPrice ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
-          <FormField
-            control={form.control}
-            name="offeredPrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Harga Penawaran (IDR) <span className="text-rose-500">*</span></FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">
-                      Rp
-                    </span>
-                    <Input type="number" min="0" step="1000000" placeholder="850000000" className="pl-10" {...field} />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+
 
         <FormField
           control={form.control}
@@ -273,11 +228,11 @@ export default function InquiryForm({
         >
           {isSubmitting ? (
             <>
-              <Loader2 size={16} className="animate-spin" />
+              <IconLoader2 size={16} className="animate-spin" />
               Mengirim...
             </>
           ) : (
-            <><MessageCircle className="w-4 h-4 mr-2" /> Kirim & Chat via WhatsApp</>
+            <><IconMessageCircle className="w-4 h-4 mr-2" /> Kirim & Chat via WhatsApp</>
           )}
         </Button>
 

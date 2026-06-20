@@ -1,7 +1,9 @@
-import { Controller, Post, Get, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
+import { GetLeadsDto } from './dto/get-leads.dto';
+import { UpdateLeadStatusDto } from './dto/update-lead-status.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
@@ -27,7 +29,7 @@ export class LeadsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Query() query: { page?: number; limit?: number; status?: string }) {
+  findAll(@Query() query: GetLeadsDto) {
     return this.leadsService.findAll(query);
   }
 
@@ -35,5 +37,15 @@ export class LeadsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.leadsService.findOne(+id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateLeadStatusDto,
+    @Req() req: any
+  ) {
+    return this.leadsService.updateStatus(+id, dto, req.user.id);
   }
 }

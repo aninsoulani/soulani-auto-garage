@@ -8,7 +8,11 @@ import { AuditAction } from '@prisma/client';
 export class ListingsService {
   constructor(private prisma: PrismaService) {}
 
-  async upsertSalesListing(vehicleId: number, dto: UpsertSalesListingDto, userId: number) {
+  async upsertSalesListing(
+    vehicleId: number,
+    dto: UpsertSalesListingDto,
+    userId: number,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const existing = await tx.salesListing.findUnique({
         where: { vehicleId },
@@ -45,7 +49,11 @@ export class ListingsService {
     });
   }
 
-  async upsertRentalListing(vehicleId: number, dto: UpsertRentalListingDto, userId: number) {
+  async upsertRentalListing(
+    vehicleId: number,
+    dto: UpsertRentalListingDto,
+    userId: number,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const existing = await tx.rentalListing.findUnique({
         where: { vehicleId },

@@ -9,8 +9,6 @@ import {
   MaxLength,
   MinLength,
   Matches,
-  IsPositive,
-  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LeadType, LeadSource } from '@prisma/client';
@@ -43,17 +41,6 @@ export class CreateLeadDto {
   @IsEmail()
   @IsOptional()
   customerEmail?: string;
-
-  /**
-   * Required only when type === MAKE_OFFER.
-   * Must be a positive decimal (IDR amount).
-   */
-  @ValidateIf((o) => o.type === LeadType.MAKE_OFFER)
-  @IsNotEmpty({ message: 'offeredPrice is required when inquiry type is Make Offer' })
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @IsPositive()
-  @Type(() => Number)
-  offeredPrice?: number;
 
   @IsString()
   @IsOptional()

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { IconX } from '@tabler/icons-react';
 import type { LeadType } from '@/types/api.types';
 import InquiryForm from './InquiryForm';
 
@@ -51,7 +51,7 @@ export default function InquirySheet({
             className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
             aria-label="Tutup"
           >
-            <X size={16} className="text-slate-600" />
+            <IconX size={16} className="text-slate-600" />
           </button>
         </div>
 

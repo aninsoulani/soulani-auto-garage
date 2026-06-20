@@ -5,8 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function InspectionTab({ control }: { control: any }) {
+import { type Control } from 'react-hook-form';
+import type { VehicleFormValues } from './VehicleForm';
+
+export default function InspectionTab({ control }: { control: Control<VehicleFormValues> }) {
 
   const statusOptions = [
     { value: 'PASS', label: 'Pass' },
@@ -14,7 +16,7 @@ export default function InspectionTab({ control }: { control: any }) {
     { value: 'NEEDS_ATTENTION', label: 'Needs Attention' },
   ];
 
-  const inspectionFields = [
+  const inspectionFields: Array<{ name: keyof VehicleFormValues; label: string }> = [
     { name: 'inspectionEngineStatus', label: 'Engine Status' },
     { name: 'inspectionTransmissionStatus', label: 'Transmission Status' },
     { name: 'inspectionSuspensionStatus', label: 'Suspension Status' },
@@ -69,7 +71,7 @@ export default function InspectionTab({ control }: { control: any }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs font-medium text-gray-600">{f.label}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || 'PASS'}>
+                  <Select onValueChange={field.onChange} value={(field.value as string) || 'PASS'}>
                     <FormControl>
                       <SelectTrigger className="bg-white">
                         <SelectValue placeholder="Select Status" />

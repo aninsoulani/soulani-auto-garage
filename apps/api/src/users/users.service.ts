@@ -10,13 +10,28 @@ export class UsersService {
   async findAll() {
     return this.prisma.user.findMany({
       where: { deletedAt: null },
-      select: { id: true, uuid: true, name: true, email: true, role: true, isActive: true, createdAt: true },
+      select: {
+        id: true,
+        uuid: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async create(data: { name: string; email: string; password: string; role: UserRole }) {
-    const exists = await this.prisma.user.findUnique({ where: { email: data.email } });
+  async create(data: {
+    name: string;
+    email: string;
+    password: string;
+    role: UserRole;
+  }) {
+    const exists = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
     if (exists) {
       throw new ConflictException('Email already in use');
     }
@@ -29,7 +44,14 @@ export class UsersService {
         passwordHash,
         role: data.role,
       },
-      select: { id: true, uuid: true, name: true, email: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        uuid: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
     });
   }
 }

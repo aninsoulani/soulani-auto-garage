@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Request,
+} from '@nestjs/common';
 import { VehicleInspectionsService } from './vehicle-inspections.service';
 import { CreateInspectionDto } from './dto/create-inspection.dto';
 import { UpdateInspectionDto } from './dto/update-inspection.dto';
@@ -8,7 +17,11 @@ export class VehicleInspectionsController {
   constructor(private readonly service: VehicleInspectionsService) {}
 
   @Post()
-  create(@Param('vehicleId') vehicleId: string, @Body() dto: CreateInspectionDto, @Request() req) {
+  create(
+    @Param('vehicleId') vehicleId: string,
+    @Body() dto: CreateInspectionDto,
+    @Request() req,
+  ) {
     return this.service.create(+vehicleId, dto, req.user.id);
   }
 
@@ -23,12 +36,21 @@ export class VehicleInspectionsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Param('vehicleId') vehicleId: string, @Body() dto: UpdateInspectionDto, @Request() req) {
+  update(
+    @Param('id') id: string,
+    @Param('vehicleId') vehicleId: string,
+    @Body() dto: UpdateInspectionDto,
+    @Request() req,
+  ) {
     return this.service.update(+id, +vehicleId, dto, req.user.id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Param('vehicleId') vehicleId: string, @Request() req) {
+  remove(
+    @Param('id') id: string,
+    @Param('vehicleId') vehicleId: string,
+    @Request() req,
+  ) {
     return this.service.remove(+id, +vehicleId, req.user.id);
   }
 }

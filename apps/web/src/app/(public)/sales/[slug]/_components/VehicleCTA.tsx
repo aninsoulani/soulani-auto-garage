@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { IconMessageCircle } from '@tabler/icons-react';
 import { formatIDR } from '@/lib/utils';
 import InquirySheet from '@/components/leads/InquirySheet';
 import InquiryForm from '@/components/leads/InquiryForm';
@@ -47,7 +47,7 @@ export default function VehicleCTA({ vehicleId, vehicleName, listingType = 'BOTH
           className={buttonVariants({ variant: 'outline' }) + " flex items-center justify-center w-11 h-11 p-0 bg-[#25D366] hover:bg-[#20b858] border-none shrink-0 rounded-xl"}
           aria-label="Chat via WhatsApp"
         >
-          <MessageCircle size={20} className="text-white" />
+          <IconMessageCircle size={20} className="text-white" />
         </a>
         <Button
           onClick={() => setSheetOpen(true)}

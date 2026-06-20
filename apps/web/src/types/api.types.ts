@@ -45,6 +45,56 @@ export type BookingStatus =
   | 'CANCELLED'
   | 'OVERDUE';
 
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface Lead {
+  id: number;
+  leadReferenceId?: string;
+  vehicleId: number | null;
+  type: LeadType;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  message: string | null;
+  adminNotes?: string | null;
+  source?: string | null;
+  status: LeadStatus;
+  createdAt: string;
+  vehicle?: Vehicle;
+}
+
+export interface RentalBooking {
+  id: number;
+  bookingCode?: string;
+  referenceNumber: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  identityNumber?: string;
+  licenseImageUrl?: string;
+  proofOfTransferUrl?: string;
+  startDate: string;
+  endDate: string;
+  totalPrice: string;
+  status: BookingStatus;
+  withDriver: boolean;
+  createdAt: string;
+  rentalListing?: RentalListing & { vehicle?: Vehicle };
+}
+
+export interface BlackoutDate {
+  id: number;
+  vehicleId: number;
+  startDate: string;
+  endDate: string;
+  reason: string;
+}
+
 // ─── Core Entities ────────────────────────────────────────────────────────────
 
 export interface VehicleImage {
@@ -87,9 +137,14 @@ export interface RentalListing {
   id: number;
   vehicleId: number;
   dailyRate: string;
-  weeklyRate: string | null;
+  weeklyRate?: string;
   depositAmount: string;
   isLongTermEligible: boolean;
+  isDriverAvailable: boolean;
+  driverFeePerDay?: string;
+  createdAt: string;
+  updatedAt: string;
+  vehicle?: Vehicle;
 }
 
 export interface VehicleAnalytics {
@@ -160,7 +215,6 @@ export interface CreateLeadPayload {
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
-  offeredPrice?: number;
   message?: string;
   source?: LeadSource;
 }
@@ -203,14 +257,34 @@ export interface VehicleQueryParams {
   fuelType?: FuelType;
   minPrice?: number;
   maxPrice?: number;
+  withDriver?: boolean;
   sort?: 'newest' | 'oldest' | 'price:asc' | 'price:desc' | 'year:asc' | 'year:desc' | 'mileage:asc' | 'mileage:desc';
 }
 
 // ─── Dashboard Metrics ────────────────────────────────────────────────────────
 
 export interface DashboardMetrics {
-  totalVehicles: number;
-  activeRentals: number;
-  newLeads: number;
+  sales: {
+    availableCars: number;
+    soldCars: number;
+    totalRevenue: number;
+    newLeads: number;
+  };
+  rentals: {
+    activeRentals: number;
+    pendingPayments: number;
+    utilizationRate: number;
+    revenueTrend: { name: string; revenue: number }[];
+  };
+  recentActivities: {
+    id: string;
+    type: 'RENTAL' | 'SALE_LEAD';
+    referenceCode: string;
+    customerName: string;
+    vehicleName: string;
+    status: string;
+    date: string;
+    amount?: number;
+  }[];
 }
 

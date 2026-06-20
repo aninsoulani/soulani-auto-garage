@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Car, MessageCircle, Camera, Globe, MapPin, Phone, Mail } from 'lucide-react';
+import { IconCar, IconBrandWhatsappFilled, IconBrandInstagram, IconMapPin, IconPhone, IconMail, IconBrandFacebook } from '@tabler/icons-react';
 import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
 
 const QUICK_LINKS = [
@@ -10,11 +10,11 @@ const QUICK_LINKS = [
 ];
 
 const SOCIAL_LINKS = [
-  { href: 'https://instagram.com/', icon: Camera, label: 'Instagram' },
-  { href: 'https://facebook.com/', icon: Globe, label: 'Facebook' },
+  { href: 'https://instagram.com/', icon: IconBrandInstagram, label: 'Instagram' },
+  { href: 'https://facebook.com/', icon: IconBrandFacebook, label: 'Facebook' },
   {
     href: buildGenericWhatsAppUrl(),
-    icon: MessageCircle,
+    icon: IconBrandWhatsappFilled,
     label: 'WhatsApp',
   },
 ];
@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                <Car size={18} className="text-white" />
+                <IconCar size={18} className="text-white" />
               </div>
               <span className="text-white font-bold text-lg">Soulani Auto Garage</span>
             </Link>
@@ -80,17 +80,17 @@ export default function Footer() {
             </h3>
             <ul className="space-y-3 text-sm text-slate-400">
               <li className="flex gap-2 items-start">
-                <MapPin size={15} className="shrink-0 mt-0.5 text-blue-400" />
+                <IconMapPin size={15} className="shrink-0 mt-0.5 text-blue-400" />
                 <span>Jakarta, Indonesia</span>
               </li>
               <li className="flex gap-2 items-center">
-                <Phone size={15} className="shrink-0 text-blue-400" />
+                <IconPhone size={15} className="shrink-0 text-blue-400" />
                 <a href="tel:+6281210663530" className="hover:text-white transition-colors">
                   +62 812-1066-3530
                 </a>
               </li>
               <li className="flex gap-2 items-center">
-                <Mail size={15} className="shrink-0 text-blue-400" />
+                <IconMail size={15} className="shrink-0 text-blue-400" />
                 <a
                   href="mailto:info@soulanigarage.com"
                   className="hover:text-white transition-colors"

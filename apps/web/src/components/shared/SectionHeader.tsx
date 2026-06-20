@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { IconArrowRight } from '@tabler/icons-react';
 
 interface SectionHeaderProps {
   title: string;
@@ -32,7 +32,7 @@ export default function SectionHeader({
           className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-semibold whitespace-nowrap transition-colors group"
         >
           {viewAllLabel}
-          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+          <IconArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
         </Link>
       )}
     </div>

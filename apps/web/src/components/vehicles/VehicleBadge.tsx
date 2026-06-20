@@ -1,7 +1,10 @@
-type BadgeType = 'featured' | 'new-arrival' | 'long-term' | 'inspected' | 'hot-deal';
+import { cn } from '@/lib/utils';
+
+type BadgeType = 'featured' | 'new-arrival' | 'long-term' | 'inspected' | 'hot-deal' | 'lepas-kunci' | 'with-driver';
 
 interface VehicleBadgeProps {
   type: BadgeType;
+  className?: string;
 }
 
 const BADGE_CONFIG: Record<
@@ -33,13 +36,24 @@ const BADGE_CONFIG: Record<
     className:
       'bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-semibold px-3 py-1 rounded-full shadow-lg',
   },
+  'lepas-kunci': {
+    label: 'Lepas Kunci',
+    className:
+      'bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-semibold px-3 py-1 rounded-full',
+  },
+  'with-driver': {
+    label: 'Bisa +Supir',
+    className:
+      'bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-semibold px-3 py-1 rounded-full',
+  },
 };
 
-export default function VehicleBadge({ type }: VehicleBadgeProps) {
-  const { label, className } = BADGE_CONFIG[type];
+export default function VehicleBadge({ type, className }: VehicleBadgeProps) {
+  const { label, className: baseClassName } = BADGE_CONFIG[type];
   return (
-    <span className={className}>
+    <span className={cn(baseClassName, className)}>
       {label}
     </span>
   );
 }
+

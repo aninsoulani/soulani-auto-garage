@@ -10,7 +10,7 @@ import VehicleBadge from '@/components/vehicles/VehicleBadge';
 import Breadcrumb from '@/components/shared/Breadcrumb';
 import ViewTracker from './_components/ViewTracker';
 import VehicleCTA from './_components/VehicleCTA';
-import { ShieldCheck } from 'lucide-react';
+import { IconShieldCheck } from '@tabler/icons-react';
 
 export const revalidate = 1800;
 
@@ -168,7 +168,7 @@ export default async function VehicleDetailPage({
             {latestInspection && (
               <div>
                 <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  <ShieldCheck size={18} className="text-emerald-500" />
+                  <IconShieldCheck size={18} className="text-emerald-500" />
                   Laporan Inspeksi
                 </h2>
                 <InspectionReportCard inspection={latestInspection} />

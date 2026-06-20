@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck, RotateCcw, Award, MessageCircle } from 'lucide-react';
+import { IconShieldCheck, IconRotateClockwise, IconAward, IconMessageCircle } from '@tabler/icons-react';
 import { getFeaturedVehicles, getNewArrivalVehicles, getTestimonials } from '@/lib/api';
 import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
 import VehicleCard from '@/components/vehicles/VehicleCard';
@@ -38,17 +38,17 @@ const BODY_TYPES = [
 
 const TRUST_ITEMS = [
   {
-    icon: ShieldCheck,
+    icon: IconShieldCheck,
     title: 'Inspeksi 150 Titik',
     desc: 'Setiap kendaraan diuji menyeluruh sebelum dijual',
   },
   {
-    icon: RotateCcw,
+    icon: IconRotateClockwise,
     title: '5 Hari Uang Kembali',
     desc: 'Tidak puas? Kembalikan dalam 5 hari',
   },
   {
-    icon: Award,
+    icon: IconAward,
     title: 'Garansi 1 Tahun',
     desc: 'Proteksi mesin & transmisi selama 12 bulan',
   },
@@ -254,7 +254,7 @@ export default async function HomePage() {
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-8 py-4 rounded-2xl transition-all duration-150 active:scale-95 whitespace-nowrap shrink-0 text-base"
           >
-            <MessageCircle size={20} />
+            <IconMessageCircle size={20} />
             Chat via WhatsApp
           </a>
         </div>

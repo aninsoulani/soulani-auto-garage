@@ -1,4 +1,12 @@
-import { IsInt, IsString, IsEmail, IsOptional, IsBoolean, Min, IsDateString } from 'class-validator';
+import {
+  IsInt,
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsBoolean,
+  Min,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateRentalBookingDto {
@@ -22,6 +30,10 @@ export class CreateRentalBookingDto {
   @IsString()
   licenseImageUrl?: string;
 
+  @IsOptional()
+  @IsString()
+  proofOfTransferUrl?: string;
+
   @IsDateString()
   startDate: string;
 
@@ -34,4 +46,8 @@ export class CreateRentalBookingDto {
   @IsOptional()
   @IsBoolean()
   whatsappOptIn?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  withDriver?: boolean;
 }

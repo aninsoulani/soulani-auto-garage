@@ -1,5 +1,5 @@
 'use client';
-import { MessageCircle } from 'lucide-react';
+import { IconMessageCircle } from '@tabler/icons-react';
 import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
 
 export default function WhatsAppFAB() {
@@ -13,7 +13,7 @@ export default function WhatsAppFAB() {
     >
       {/* Icon always visible */}
       <span className="flex items-center justify-center w-14 h-14 rounded-full shrink-0">
-        <MessageCircle size={26} />
+        <IconMessageCircle size={26} />
       </span>
       {/* Label: visible on desktop hover */}
       <span className="hidden sm:block max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap pr-0 group-hover:pr-5 text-sm font-semibold">

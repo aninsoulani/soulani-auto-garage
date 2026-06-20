@@ -15,7 +15,11 @@ export class ListingsController {
   }
 
   @Put('sales-listing')
-  upsertSalesListing(@Param('vehicleId') vehicleId: string, @Body() dto: UpsertSalesListingDto, @Request() req) {
+  upsertSalesListing(
+    @Param('vehicleId') vehicleId: string,
+    @Body() dto: UpsertSalesListingDto,
+    @Request() req,
+  ) {
     return this.service.upsertSalesListing(+vehicleId, dto, req.user.id);
   }
 
@@ -26,7 +30,11 @@ export class ListingsController {
   }
 
   @Put('rental-listing')
-  upsertRentalListing(@Param('vehicleId') vehicleId: string, @Body() dto: UpsertRentalListingDto, @Request() req) {
+  upsertRentalListing(
+    @Param('vehicleId') vehicleId: string,
+    @Body() dto: UpsertRentalListingDto,
+    @Request() req,
+  ) {
     return this.service.upsertRentalListing(+vehicleId, dto, req.user.id);
   }
 }

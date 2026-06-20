@@ -1,27 +1,28 @@
 import type { Vehicle } from '@/types/api.types';
 import { getTransmissionLabel, getFuelLabel, formatMileage } from '@/lib/utils';
-import { Calendar, Gauge, Cog, Fuel, Palette, Users, Car } from 'lucide-react';
+import { IconCalendar, IconGauge, IconSettings, IconGasStation, IconPalette, IconUsers, IconCar } from '@tabler/icons-react';
 
 interface VehicleSpecGridProps {
   vehicle: Vehicle;
+  hidePreviousOwners?: boolean;
 }
 
-export default function VehicleSpecGrid({ vehicle }: VehicleSpecGridProps) {
+export default function VehicleSpecGrid({ vehicle, hidePreviousOwners }: VehicleSpecGridProps) {
   const specs = [
-    { icon: Calendar, label: 'Tahun', value: String(vehicle.year) },
-    { icon: Car, label: 'Tipe Mobil', value: vehicle.carType || '-' },
-    { icon: Gauge, label: 'Kilometer', value: formatMileage(vehicle.mileage) },
-    { icon: Cog, label: 'Transmisi', value: getTransmissionLabel(vehicle.transmission) },
-    { icon: Fuel, label: 'Bahan Bakar', value: getFuelLabel(vehicle.fuelType) },
-    { icon: Palette, label: 'Warna', value: vehicle.color || '-' },
-    {
-      icon: Users,
+    { icon: IconCalendar, label: 'Tahun', value: String(vehicle.year) },
+    { icon: IconCar, label: 'Tipe Mobil', value: vehicle.carType || '-' },
+    { icon: IconGauge, label: 'Kilometer', value: formatMileage(vehicle.mileage) },
+    { icon: IconSettings, label: 'Transmisi', value: getTransmissionLabel(vehicle.transmission) },
+    { icon: IconGasStation, label: 'Bahan Bakar', value: getFuelLabel(vehicle.fuelType) },
+    { icon: IconPalette, label: 'Warna', value: vehicle.color || '-' },
+    ...(!hidePreviousOwners ? [{
+      icon: IconUsers,
       label: 'Pemilik Sebelumnya',
       value: vehicle.salesListing 
         ? (vehicle.salesListing.previousOwners === 0 ? 'Tangan Pertama' : `${vehicle.salesListing.previousOwners}x`)
         : '-',
       isStrikethrough: vehicle.salesListing ? vehicle.salesListing.previousOwners === 0 : false,
-    },
+    }] : []),
   ];
 
   return (
