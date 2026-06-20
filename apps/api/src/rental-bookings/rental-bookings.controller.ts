@@ -46,6 +46,12 @@ export class RentalBookingsController {
     return this.bookingsService.create(createDto, userId);
   }
 
+  @Public()
+  @Get('public/:bookingCode')
+  findByBookingCodePublic(@Param('bookingCode') bookingCode: string) {
+    return this.bookingsService.findByBookingCodePublic(bookingCode);
+  }
+
   @Get()
   findAll(@Query() query: QueryRentalBookingDto) {
     return this.bookingsService.findAll(query);

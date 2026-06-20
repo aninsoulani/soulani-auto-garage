@@ -30,7 +30,6 @@ enum VehicleStatus {
   DRAFT
   ACTIVE
   SOLD
-  RENTED
   MAINTENANCE
 }
 
@@ -91,7 +90,6 @@ enum AuditAction {
 enum TransmissionType {
   MANUAL
   AUTOMATIC
-  CVT
 }
 
 enum FuelType {

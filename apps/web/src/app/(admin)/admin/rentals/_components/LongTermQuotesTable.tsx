@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { IconMessageCircle, IconFileText, IconEye, IconSearch, IconCalendar } from '@tabler/icons-react';
+import { IconMessageCircle, IconFileText, IconEye, IconSearch, IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import Swal from 'sweetalert2';
 import type { Lead } from '@/types/api.types';
@@ -39,6 +39,8 @@ export default function LongTermQuotesTable() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   // Dialog States
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
@@ -202,6 +204,7 @@ export default function LongTermQuotesTable() {
   const handleClear = () => {
     setSearch('');
     setStatus('');
+    setCurrentPage(1);
     fetchLeads('', '');
   };
 
@@ -251,6 +254,9 @@ export default function LongTermQuotesTable() {
     return <div className="py-8 text-center text-slate-500 animate-pulse">Loading quote data...</div>;
   }
 
+  const totalPages = Math.ceil(leads.length / pageSize);
+  const paginatedLeads = leads.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'NEW': return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">New</Badge>;
@@ -272,7 +278,7 @@ export default function LongTermQuotesTable() {
               type="text"
               placeholder="Search name, email, phone..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full bg-white pl-9"
             />
             <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -282,7 +288,7 @@ export default function LongTermQuotesTable() {
 
         <div className="w-full md:w-48">
           <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
-          <Select value={status || 'ALL'} onValueChange={(v) => setStatus(v === 'ALL' ? '' : v)}>
+          <Select value={status || 'ALL'} onValueChange={(v) => { setStatus(v === 'ALL' ? '' : v); setCurrentPage(1); }}>
             <SelectTrigger className="bg-white text-sm">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
@@ -319,14 +325,14 @@ export default function LongTermQuotesTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {leads.length === 0 ? (
+              {paginatedLeads.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12 text-slate-500 bg-white font-medium">
                     No long-term quote requests at this time.
                   </TableCell>
                 </TableRow>
               ) : (
-                leads.map((lead) => {
+                paginatedLeads.map((lead) => {
                   const parsed = parseLeadMessage(lead.message);
                   return (
                     <TableRow key={lead.id}>
@@ -556,6 +562,38 @@ export default function LongTermQuotesTable() {
             </TableBody>
           </Table>
         </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
+            <div className="text-sm text-slate-500">
+              Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, leads.length)}</span> of <span className="font-medium">{leads.length}</span> results
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="h-8 px-2"
+              >
+                <IconChevronLeft size={16} />
+              </Button>
+              <div className="flex items-center justify-center px-3 text-sm font-medium">
+                {currentPage} / {totalPages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="h-8 px-2"
+              >
+                <IconChevronRight size={16} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={wonDialogOpen} onOpenChange={(open) => {

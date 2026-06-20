@@ -124,6 +124,13 @@ export async function submitRentalBooking(payload: Record<string, unknown>): Pro
   });
 }
 
+/** Fetch public booking details by code */
+export async function getPublicBookingByCode(bookingCode: string): Promise<RentalBooking & { vehicle: Vehicle }> {
+  return apiFetch(`/rental-bookings/public/${bookingCode}`, {
+    cache: 'no-store',
+  });
+}
+
 // ─── Public: Analytics ────────────────────────────────────────────────────────
 
 /** Fire-and-forget view tracking for a vehicle detail page. */

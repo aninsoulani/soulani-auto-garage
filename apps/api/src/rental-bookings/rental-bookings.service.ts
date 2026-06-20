@@ -257,6 +257,46 @@ export class RentalBookingsService {
     };
   }
 
+  async findByBookingCodePublic(bookingCode: string) {
+    const booking = await this.prisma.rentalBooking.findUnique({
+      where: { bookingCode, deletedAt: null },
+      include: {
+        rentalListing: {
+          include: {
+            vehicle: {
+              select: {
+                id: true,
+                make: true,
+                model: true,
+                status: true,
+                plateNumber: true,
+                year: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException(`Booking with code ${bookingCode} not found`);
+    }
+
+    return {
+      id: booking.id,
+      bookingCode: booking.bookingCode,
+      status: booking.status,
+      customerName: booking.customerName,
+      customerEmail: booking.customerEmail,
+      customerPhone: booking.customerPhone,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      totalPrice: booking.totalPrice,
+      createdAt: booking.createdAt,
+      vehicle: booking.rentalListing.vehicle,
+    };
+  }
+
   async updateStatus(
     id: number,
     updateDto: UpdateRentalBookingStatusDto,
@@ -281,7 +321,7 @@ export class RentalBookingsService {
       if (updateDto.status === BookingStatus.ACTIVE) {
         await tx.vehicle.update({
           where: { id: existing.rentalListing.vehicleId },
-          data: { status: VehicleStatus.RENTED },
+          data: { status: VehicleStatus.ACTIVE },
         });
       } else if (
         updateDto.status === BookingStatus.COMPLETED ||

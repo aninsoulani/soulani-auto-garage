@@ -83,12 +83,12 @@ export class VehiclesService {
     
     // Dynamically compute rented status based on exact current time
     let computedStatus = vehicle.status;
-    if (vehicle.status === VehicleStatus.RENTED || vehicle.status === VehicleStatus.ACTIVE) {
+    if (vehicle.status === ('RENTED' as any) || vehicle.status === VehicleStatus.ACTIVE) {
       const now = new Date();
       const hasActiveBooking = vehicle.rentalListing?.bookings?.some((b: any) => 
         b.status === 'ACTIVE' && new Date(b.startDate) <= now && new Date(b.endDate) >= now
       );
-      computedStatus = hasActiveBooking ? VehicleStatus.RENTED : VehicleStatus.ACTIVE;
+      computedStatus = hasActiveBooking ? ('RENTED' as any) : VehicleStatus.ACTIVE;
     }
 
     // Safely remove bookings so we don't leak them in public endpoints
@@ -276,7 +276,21 @@ export class VehiclesService {
     const where: any = { deletedAt: null };
 
     if (status) {
-      where.status = status;
+      if (status === ('RENTED' as any)) {
+        where.status = VehicleStatus.ACTIVE;
+        where.rentalListing = {
+          ...(where.rentalListing || {}),
+          bookings: {
+            some: {
+              status: BookingStatus.ACTIVE,
+              startDate: { lte: new Date() },
+              endDate: { gte: new Date() },
+            }
+          }
+        };
+      } else {
+        where.status = status;
+      }
     } else {
       if (isAdmin) {
         where.status = {
@@ -284,7 +298,6 @@ export class VehiclesService {
             VehicleStatus.ACTIVE,
             VehicleStatus.SOLD,
             VehicleStatus.MAINTENANCE,
-            VehicleStatus.RENTED,
           ],
         };
       } else {
@@ -292,7 +305,6 @@ export class VehiclesService {
           in: [
             VehicleStatus.ACTIVE,
             VehicleStatus.SOLD,
-            VehicleStatus.RENTED,
             VehicleStatus.MAINTENANCE,
           ],
         }; // Show MAINTENANCE for public rentals

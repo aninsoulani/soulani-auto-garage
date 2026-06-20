@@ -6,6 +6,7 @@ import {
   IsString,
   IsBoolean,
   IsNumber,
+  IsIn,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import {
@@ -30,8 +31,8 @@ export class QueryVehicleDto {
   limit?: number = 10;
 
   @IsOptional()
-  @IsEnum(VehicleStatus)
-  status?: VehicleStatus;
+  @IsIn([...Object.values(VehicleStatus), 'RENTED'])
+  status?: VehicleStatus | 'RENTED';
 
   @IsOptional()
   @IsEnum(ListingType)

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { IconPlus, IconEdit, IconCheck, IconX, IconTrash, IconSearch } from '@tabler/icons-react';
+import { IconPlus, IconEdit, IconCheck, IconX, IconTrash, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -34,10 +34,13 @@ export default function PaymentMethodsAdminPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const handleClear = () => {
     setSearch('');
     setStatusFilter('ALL');
+    setCurrentPage(1);
   };
 
   const form = useForm<FormValues>({
@@ -131,6 +134,9 @@ export default function PaymentMethodsAdminPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const totalPages = Math.ceil(filteredMethods.length / pageSize);
+  const paginatedMethods = filteredMethods.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center mb-6">
@@ -151,7 +157,7 @@ export default function PaymentMethodsAdminPage() {
               type="text"
               placeholder="Search by name, type, instructions..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full bg-white pl-9"
             />
             <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -160,7 +166,7 @@ export default function PaymentMethodsAdminPage() {
 
         <div className="w-full md:w-48">
           <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
             <SelectTrigger className="bg-white text-sm">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
@@ -196,14 +202,14 @@ export default function PaymentMethodsAdminPage() {
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-slate-500 bg-white font-medium animate-pulse">Loading...</TableCell>
                 </TableRow>
-              ) : filteredMethods.length === 0 ? (
+              ) : paginatedMethods.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-slate-500 bg-white font-medium">
                     No payment methods found.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMethods.map(pm => (
+                paginatedMethods.map(pm => (
                   <TableRow key={pm.id}>
                     <TableCell className="font-medium text-slate-900">{pm.name}</TableCell>
                     <TableCell><Badge variant="outline" className="text-slate-600 bg-slate-50 border-slate-200">{pm.type}</Badge></TableCell>
@@ -229,6 +235,38 @@ export default function PaymentMethodsAdminPage() {
             </TableBody>
           </Table>
         </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
+            <div className="text-sm text-slate-500">
+              Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, filteredMethods.length)}</span> of <span className="font-medium">{filteredMethods.length}</span> results
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="h-8 px-2"
+              >
+                <IconChevronLeft size={16} />
+              </Button>
+              <div className="flex items-center justify-center px-3 text-sm font-medium">
+                {currentPage} / {totalPages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="h-8 px-2"
+              >
+                <IconChevronRight size={16} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={modalOpen} onOpenChange={(open) => {

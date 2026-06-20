@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { enUS } from 'date-fns/locale';
-import { IconTrash } from '@tabler/icons-react';
+import { IconTrash, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 
 export default function BlackoutDatesManager() {
@@ -18,6 +18,8 @@ export default function BlackoutDatesManager() {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
   const [blackoutDates, setBlackoutDates] = useState<BlackoutDate[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   // Form State
   const [date, setDate] = useState<{ from: Date | undefined; to?: Date | undefined }>({
@@ -125,6 +127,7 @@ export default function BlackoutDatesManager() {
 
   const handleVehicleSelect = (val: string) => {
     setSelectedVehicleId(val);
+    setCurrentPage(1);
     if (val) {
       fetchBlackoutDates(Number(val));
     } else {
@@ -275,7 +278,13 @@ export default function BlackoutDatesManager() {
                 <p>No blackout dates for this vehicle.</p>
                 <p className="text-sm mt-2">Vehicle is available for rental.</p>
               </div>
-            ) : (
+            ) : (() => {
+              const sortedBlackoutDates = [...blackoutDates].sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+              const totalPages = Math.ceil(sortedBlackoutDates.length / pageSize);
+              const paginatedDates = sortedBlackoutDates.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+              
+              return (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -286,7 +295,7 @@ export default function BlackoutDatesManager() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {blackoutDates.map((date) => (
+                  {paginatedDates.map((date) => (
                     <TableRow key={date.id}>
                       <TableCell className="font-medium text-slate-900">
                         {format(new Date(date.startDate), 'dd MMM yyyy HH:mm')}
@@ -311,7 +320,41 @@ export default function BlackoutDatesManager() {
                   ))}
                 </TableBody>
               </Table>
-            )
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
+                  <div className="text-sm text-slate-500">
+                    Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, sortedBlackoutDates.length)}</span> of <span className="font-medium">{sortedBlackoutDates.length}</span> results
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 px-2"
+                    >
+                      <IconChevronLeft size={16} />
+                    </Button>
+                    <div className="flex items-center justify-center px-3 text-sm font-medium">
+                      {currentPage} / {totalPages}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 px-2"
+                    >
+                      <IconChevronRight size={16} />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              </>
+              );
+            })()
           ) : (
             <div className="p-12 text-center text-slate-500">
               Please select a vehicle from the left panel first.

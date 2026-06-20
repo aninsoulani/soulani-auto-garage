@@ -10,6 +10,7 @@ import Breadcrumb from '@/components/shared/Breadcrumb';
 import ViewTracker from '../../sales/[slug]/_components/ViewTracker';
 import { IconShieldCheck, IconUserCircle, IconKey, IconInfoCircle } from '@tabler/icons-react';
 import RentalBookingWidget from './_components/RentalBookingWidget';
+import ErrorToast from './_components/ErrorToast';
 
 export const revalidate = 1800;
 
@@ -44,8 +45,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export default async function RentalDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function RentalDetailPage({ params, searchParams }: { params: Promise<{ slug: string }>, searchParams: Promise<{ error?: string }> }) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const error = resolvedSearchParams?.error;
 
   let vehicle;
   try {
@@ -82,6 +85,7 @@ export default async function RentalDetailPage({ params }: { params: Promise<{ s
 
   return (
     <>
+      {error && <ErrorToast error={error} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <ViewTracker vehicleId={vehicle.id} />
 

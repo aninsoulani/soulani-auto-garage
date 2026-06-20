@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { IconFileText, IconEye, IconDownload, IconSearch } from '@tabler/icons-react';
+import { IconFileText, IconEye, IconDownload, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -442,6 +442,8 @@ export default function ActiveBookingsTable() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const fetchBookings = useCallback(async (overrideSearch?: string, overrideStatus?: string) => {
     if (!accessToken) return;
@@ -474,6 +476,7 @@ export default function ActiveBookingsTable() {
   const handleClear = () => {
     setSearch('');
     setStatus('');
+    setCurrentPage(1);
     fetchBookings('', '');
   };
 
@@ -491,6 +494,9 @@ export default function ActiveBookingsTable() {
   if (loading) {
     return <div className="py-8 text-center text-slate-500 animate-pulse">Loading booking data...</div>;
   }
+
+  const totalPages = Math.ceil(bookings.length / pageSize);
+  const paginatedBookings = bookings.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 
   const getStatusBadge = (status: string) => {
@@ -515,7 +521,7 @@ export default function ActiveBookingsTable() {
               type="text"
               placeholder="Search name, email, phone..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full bg-white pl-9"
             />
             <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -525,7 +531,7 @@ export default function ActiveBookingsTable() {
 
         <div className="w-full md:w-48">
           <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
-          <Select value={status || 'ALL'} onValueChange={(v) => setStatus(v === 'ALL' ? '' : v)}>
+          <Select value={status || 'ALL'} onValueChange={(v) => { setStatus(v === 'ALL' ? '' : v); setCurrentPage(1); }}>
             <SelectTrigger className="bg-white text-sm">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
@@ -563,14 +569,14 @@ export default function ActiveBookingsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {bookings.length === 0 ? (
+            {paginatedBookings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-slate-500 bg-white font-medium">
                   No rental bookings at this time.
                 </TableCell>
               </TableRow>
             ) : (
-              bookings.map((booking) => (
+              paginatedBookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium text-slate-900">
                     {booking.bookingCode || `#${booking.id}`}
@@ -612,6 +618,38 @@ export default function ActiveBookingsTable() {
           </TableBody>
         </Table>
       </div>
+      
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
+          <div className="text-sm text-slate-500">
+            Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, bookings.length)}</span> of <span className="font-medium">{bookings.length}</span> results
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="h-8 px-2"
+            >
+              <IconChevronLeft size={16} />
+            </Button>
+            <div className="flex items-center justify-center px-3 text-sm font-medium">
+              {currentPage} / {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8 px-2"
+            >
+              <IconChevronRight size={16} />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   );

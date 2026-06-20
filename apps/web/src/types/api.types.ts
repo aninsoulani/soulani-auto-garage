@@ -7,8 +7,9 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export type ListingType = 'SALE' | 'RENTAL' | 'BOTH';
-export type VehicleStatus = 'DRAFT' | 'ACTIVE' | 'SOLD' | 'RENTED' | 'MAINTENANCE';
-export type TransmissionType = 'MANUAL' | 'AUTOMATIC' | 'CVT';
+export type VehicleStatus = 'DRAFT' | 'ACTIVE' | 'SOLD' | 'MAINTENANCE';
+export type ExtendedVehicleStatus = VehicleStatus | 'RENTED';
+export type TransmissionType = 'MANUAL' | 'AUTOMATIC';
 export type FuelType = 'GASOLINE' | 'DIESEL' | 'HYBRID' | 'ELECTRIC';
 export type CarType = 'SUV' | 'MPV' | 'HATCHBACK' | 'SEDAN' | 'COUPE' | 'CONVERTIBLE' | 'WAGON' | 'PICKUP' | 'VAN' | 'CROSSOVER';
 
@@ -170,7 +171,7 @@ export interface Vehicle {
   chassisNumber: string | null;
   engineNumber: string | null;
   listingType: ListingType;
-  status: VehicleStatus;
+  status: ExtendedVehicleStatus;
   isFeatured: boolean;
   isNewArrival: boolean;
   mileage: number | null;
@@ -247,7 +248,7 @@ export interface ApiSuccessResponse<T> {
 export interface VehicleQueryParams {
   page?: number;
   limit?: number;
-  status?: VehicleStatus;
+  status?: ExtendedVehicleStatus;
   listingType?: ListingType;
   search?: string;
   carType?: CarType;

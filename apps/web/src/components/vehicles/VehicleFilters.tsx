@@ -52,7 +52,7 @@ export default function VehicleFilters({ filters, onChange }: VehicleFiltersProp
       {/* Transmission */}
       <div>
         <p className="font-semibold text-slate-800 mb-2">Transmisi</p>
-        {(['', 'AUTOMATIC', 'MANUAL', 'CVT'] as const).map((t) => (
+        {(['', 'AUTOMATIC', 'MANUAL'] as const).map((t) => (
           <label key={t} className="flex items-center gap-2 py-1 cursor-pointer text-slate-900 hover:text-blue-600 font-medium">
             <input
               type="radio"
@@ -62,7 +62,7 @@ export default function VehicleFilters({ filters, onChange }: VehicleFiltersProp
               onChange={() => onChange({ transmission: t })}
               className="accent-blue-600"
             />
-            {t === '' ? 'Semua' : t === 'AUTOMATIC' ? 'Otomatis' : t === 'MANUAL' ? 'Manual' : 'CVT'}
+            {t === '' ? 'Semua' : t === 'AUTOMATIC' ? 'Otomatis' : 'Manual'}
           </label>
         ))}
       </div>

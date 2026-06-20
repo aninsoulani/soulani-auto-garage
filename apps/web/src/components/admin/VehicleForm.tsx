@@ -26,14 +26,14 @@ const baseSchema = z.object({
   year: z.number().min(1900, 'Year must be between 1900 and the current year.').max(new Date().getFullYear() + 1, 'Year must be between 1900 and the current year.'),
   color: z.string().min(1, 'Color is required.'),
   listingType: z.enum(['SALE', 'RENTAL', 'BOTH']),
-  status: z.enum(['ACTIVE', 'SOLD', 'RENTED', 'MAINTENANCE']),
+  status: z.enum(['ACTIVE', 'SOLD', 'MAINTENANCE']),
   vin: z.string().optional().nullable(),
   plateNumber: z.string().min(1, 'Plate number is required.'),
   chassisNumber: z.string().optional().nullable(),
   engineNumber: z.string().optional().nullable(),
   mileage: z.number().min(1, 'Mileage must be greater than 0.'),
   carType: z.enum(['SUV', 'MPV', 'HATCHBACK', 'SEDAN', 'COUPE', 'CONVERTIBLE', 'WAGON', 'PICKUP', 'VAN', 'CROSSOVER']),
-  transmission: z.enum(['MANUAL', 'AUTOMATIC', 'CVT']).optional().nullable(),
+  transmission: z.enum(['MANUAL', 'AUTOMATIC']).optional().nullable(),
   fuelType: z.enum(['GASOLINE', 'DIESEL', 'HYBRID', 'ELECTRIC']).optional().nullable(),
   isFeatured: z.boolean().optional(),
   isNewArrival: z.boolean().optional(),
@@ -161,7 +161,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
       year: initialData?.year || new Date().getFullYear(),
       color: initialData?.color || '',
       listingType: initialData?.listingType || 'SALE',
-      status: (initialData?.status === 'DRAFT' ? 'ACTIVE' : initialData?.status) || 'ACTIVE',
+      status: (initialData?.status === 'DRAFT' || initialData?.status === 'RENTED' ? 'ACTIVE' : initialData?.status) || 'ACTIVE',
       vin: initialData?.vin || '',
       plateNumber: initialData?.plateNumber || '',
       chassisNumber: initialData?.chassisNumber || '',
@@ -426,7 +426,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
                 <FormItem><FormLabel>Listing Type *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SALE">Sale</SelectItem><SelectItem value="RENTAL">Rental</SelectItem><SelectItem value="BOTH">Both</SelectItem></SelectContent></Select><FormMessage /></FormItem>
               )} />
               <FormField control={control} name="status" render={({ field }) => (
-                <FormItem><FormLabel>Status *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="ACTIVE">Active</SelectItem><SelectItem value="SOLD">Sold</SelectItem><SelectItem value="RENTED">Rented</SelectItem><SelectItem value="MAINTENANCE">Maintenance</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                <FormItem><FormLabel>Status *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="ACTIVE">Active</SelectItem><SelectItem value="SOLD">Sold</SelectItem><SelectItem value="MAINTENANCE">Maintenance</SelectItem></SelectContent></Select><FormMessage /></FormItem>
               )} />
               <FormField control={control} name="plateNumber" render={({ field }) => (
                 <FormItem><FormLabel>Plate Number *</FormLabel><FormControl><Input placeholder="B 1234 XYZ" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
@@ -441,7 +441,7 @@ export default function VehicleForm({ initialData, vehicleId }: { initialData?: 
                 <FormItem><FormLabel>Car Type *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select car type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SUV">SUV</SelectItem><SelectItem value="MPV">MPV</SelectItem><SelectItem value="HATCHBACK">Hatchback</SelectItem><SelectItem value="SEDAN">Sedan</SelectItem><SelectItem value="COUPE">Coupe</SelectItem><SelectItem value="CONVERTIBLE">Convertible</SelectItem><SelectItem value="WAGON">Wagon</SelectItem><SelectItem value="PICKUP">Pickup</SelectItem><SelectItem value="VAN">Van</SelectItem><SelectItem value="CROSSOVER">Crossover</SelectItem></SelectContent></Select><FormMessage /></FormItem>
               )} />
               <FormField control={control} name="transmission" render={({ field }) => (
-                <FormItem><FormLabel>Transmission</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select transmission" /></SelectTrigger></FormControl><SelectContent><SelectItem value="AUTOMATIC">Automatic</SelectItem><SelectItem value="MANUAL">Manual</SelectItem><SelectItem value="CVT">CVT</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                <FormItem><FormLabel>Transmission</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select transmission" /></SelectTrigger></FormControl><SelectContent><SelectItem value="AUTOMATIC">Automatic</SelectItem><SelectItem value="MANUAL">Manual</SelectItem></SelectContent></Select><FormMessage /></FormItem>
               )} />
               <FormField control={control} name="fuelType" render={({ field }) => (
                 <FormItem><FormLabel>Fuel Type</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Select fuel type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="GASOLINE">Gasoline</SelectItem><SelectItem value="DIESEL">Diesel</SelectItem><SelectItem value="HYBRID">Hybrid</SelectItem><SelectItem value="ELECTRIC">Electric</SelectItem></SelectContent></Select><FormMessage /></FormItem>

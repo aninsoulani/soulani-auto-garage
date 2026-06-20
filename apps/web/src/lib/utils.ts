@@ -55,7 +55,6 @@ export function formatMileage(km: number | null | undefined): string {
 const TRANSMISSION_LABELS: Record<TransmissionType, string> = {
   MANUAL: 'Manual',
   AUTOMATIC: 'Otomatis',
-  CVT: 'CVT',
 };
 
 export function getTransmissionLabel(t: TransmissionType | null | undefined): string {
