@@ -1,19 +1,25 @@
+import { useCmsStore } from '@/store/cms.store';
+
 /**
  * WhatsApp URL builders for Soulani Auto Garage.
  *
- * The NEXT_PUBLIC_WHATSAPP_NUMBER env var holds the temporary number.
- * In Phase 6 this will be read from the HomepageContent CMS table
- * (key: 'whatsapp_number') so it can be updated from the admin dashboard
- * without env var changes or redeployment.
+ * In Phase 6 this is read from the client-side Zustand store which
+ * fetches from the HomepageContent CMS table.
  */
 
-const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281210663530';
+export function getWhatsAppNumber(): string {
+  if (typeof window !== 'undefined') {
+    const fromStore = useCmsStore.getState().whatsappNumber;
+    if (fromStore) return fromStore;
+  }
+  return ''; // fallback
+}
 
 /**
  * Build a wa.me URL with a custom pre-filled message.
  */
 export function buildWhatsAppUrl(message: string): string {
-  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${getWhatsAppNumber()}?text=${encodeURIComponent(message)}`;
 }
 
 /**

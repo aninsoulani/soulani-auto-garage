@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { IconShieldCheck, IconRotateClockwise, IconAward, IconMessageCircle } from '@tabler/icons-react';
+import { IconShieldCheck, IconRotateClockwise, IconAward, IconMessageCircle, IconBrandWhatsapp } from '@tabler/icons-react';
 import { getFeaturedVehicles, getNewArrivalVehicles, getTestimonials } from '@/lib/api';
-import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
+import WhatsAppLink from '@/components/shared/WhatsAppLink';
 import VehicleCard from '@/components/vehicles/VehicleCard';
 import SectionHeader from '@/components/shared/SectionHeader';
 import SkeletonCard from '@/components/shared/SkeletonCard';
@@ -248,15 +248,12 @@ export default async function HomePage() {
               Chat langsung dengan tim kami. Kami siap membantu Anda menemukan mobil yang tepat.
             </p>
           </div>
-          <a
-            href={buildGenericWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-8 py-4 rounded-2xl transition-all duration-150 active:scale-95 whitespace-nowrap shrink-0 text-base"
-          >
-            <IconMessageCircle size={20} />
-            Chat via WhatsApp
-          </a>
+            <WhatsAppLink
+              className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-8 py-4 rounded-xl transition-all active:scale-95 text-lg shadow-lg shadow-green-100"
+            >
+              <IconBrandWhatsapp size={24} />
+              Chat Langsung via WhatsApp
+            </WhatsAppLink>
         </div>
       </section>
     </div>

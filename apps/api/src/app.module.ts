@@ -22,6 +22,10 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronModule } from './cron/cron.module';
+import { AuditModule } from './audit/audit.module';
+
+import { TestimonialsModule } from './testimonials/testimonials.module';
+import { CmsModule } from './cms/cms.module';
 
 @Module({
   imports: [
@@ -63,6 +67,9 @@ import { CronModule } from './cron/cron.module';
     UploadsModule,
     ScheduleModule.forRoot(),
     CronModule,
+    AuditModule,
+    TestimonialsModule,
+    CmsModule,
   ],
   controllers: [AppController],
   providers: [

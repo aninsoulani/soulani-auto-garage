@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { IconMapSearch, IconBrandWhatsapp, IconMailSpark, IconClock, IconMessageCircle } from '@tabler/icons-react';
 import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
+import ContactWhatsAppCTA from './_components/ContactWhatsAppCTA';
 
 /**
  * Contact Us — Static content for Phase 3.
@@ -24,8 +25,8 @@ const CONTACT_ITEMS = [
   {
     icon: IconBrandWhatsapp,
     label: 'Telepon / WhatsApp',
-    value: '+62 812-1066-3530',
-    href: 'tel:+6281210663530',
+    value: '+62 800-000-0000',
+    href: 'tel:+6280000000',
   },
   {
     icon: IconMailSpark,
@@ -88,15 +89,7 @@ export default function KontakPage() {
           ))}
 
           {/* WhatsApp primary CTA */}
-          <a
-            href={buildGenericWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold py-4 rounded-2xl transition-all active:scale-95 text-base shadow-md shadow-green-100"
-          >
-            <IconMessageCircle size={22} />
-            Chat Langsung via WhatsApp
-          </a>
+          <ContactWhatsAppCTA />
         </div>
 
         {/* Google Maps embed */}

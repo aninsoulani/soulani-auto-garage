@@ -7,7 +7,7 @@ import { BookingStatus, VehicleStatus, BlackoutReason } from '@prisma/client';
 export class CronService {
   private readonly logger = new Logger(CronService.name);
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleOverdueBookings() {
@@ -109,7 +109,48 @@ export class CronService {
         }
       }
     } catch (error) {
-      this.logger.error('Failed to update vehicles to maintenance status', error);
+      this.logger.error(
+        'Failed to update vehicles to maintenance status',
+        error,
+      );
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleCompletedMaintenanceVehicles() {
+    this.logger.debug('Running handleCompletedMaintenanceVehicles cron job...');
+    try {
+      const now = new Date();
+      const vehiclesToRestore = await this.prisma.vehicle.findMany({
+        where: {
+          status: VehicleStatus.MAINTENANCE,
+          deletedAt: null,
+          blackoutDates: {
+            none: {
+              reason: BlackoutReason.MAINTENANCE,
+              startDate: { lte: now },
+              endDate: { gte: now },
+              deletedAt: null,
+            },
+          },
+        },
+      });
+
+      if (vehiclesToRestore.length > 0) {
+        for (const vehicle of vehiclesToRestore) {
+          await this.prisma.vehicle.update({
+            where: { id: vehicle.id },
+            data: {
+              status: VehicleStatus.ACTIVE,
+            },
+          });
+          this.logger.log(
+            `Vehicle ${vehicle.make} ${vehicle.model} (ID: ${vehicle.id}) has been automatically restored to ACTIVE (maintenance period ended).`,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error('Failed to restore vehicles to active status', error);
     }
   }
 }

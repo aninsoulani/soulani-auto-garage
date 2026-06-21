@@ -88,7 +88,7 @@ async function main() {
     { key: 'trust_return_days', value: JSON.stringify('5') },
     { key: 'trust_warranty_months', value: JSON.stringify('12') },
     // Phase 6: This key replaces NEXT_PUBLIC_WHATSAPP_NUMBER env var
-    { key: 'whatsapp_number', value: JSON.stringify('6281210663530') },
+    { key: 'whatsapp_number', value: JSON.stringify('') },
     // Phase 6: About Us page content
     { key: 'about_hero_title', value: JSON.stringify('Tentang Soulani Auto Garage') },
     { key: 'about_story', value: JSON.stringify('Soulani Auto Garage didirikan dengan satu tujuan sederhana: membuat proses membeli dan menyewa mobil menjadi pengalaman yang menyenangkan, mudah, dan dapat dipercaya.') },

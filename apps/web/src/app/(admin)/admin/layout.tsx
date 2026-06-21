@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { IconMenu2, IconDashboard, IconCar, IconUsers, IconLogout, IconChevronDown, IconSettings, IconCalendarEvent, IconCreditCard } from '@tabler/icons-react';
+import { IconMenu2, IconDashboard, IconCar, IconUsers, IconLogout, IconChevronDown, IconSettings, IconCalendarEvent, IconCreditCard, IconCarGarage } from '@tabler/icons-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
@@ -114,26 +114,62 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {collapsed ? <IconMenu2 size={24} /> : <IconMenu2 size={24} />}       </button>
         </div>
         <nav className="flex-1 py-6 space-y-2 px-3 overflow-y-auto">
-          <Link href="/admin/dashboard" title="Dashboard" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname === '/admin/dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <IconDashboard size={20} className="shrink-0" />
-            {!collapsed && <span className="font-medium text-sm">Dashboard</span>}
-          </Link>
-          <Link href="/admin/inventory" title="Inventory" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/inventory') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <IconCar size={20} className="shrink-0" />
-            {!collapsed && <span className="font-medium text-sm">Inventory</span>}
-          </Link>
-          <Link href="/admin/rentals" title="Rentals" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/rentals') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <IconCalendarEvent size={20} className="shrink-0" />
-            {!collapsed && <span className="font-medium text-sm">Rentals</span>}
-          </Link>
-          <Link href="/admin/settings/payment-methods" title="Payment Methods" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/settings/payment-methods') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <IconCreditCard size={20} className="shrink-0" />
-            {!collapsed && <span className="font-medium text-sm">Payment Methods</span>}
-          </Link>
-          <Link href="/admin/crm" title="CRM Leads" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/crm') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
-            <IconUsers size={20} className="shrink-0" />
-            {!collapsed && <span className="font-medium text-sm">CRM Leads</span>}
-          </Link>
+          {/* Common across most roles or conditionally displayed based on RBAC */}
+          {(user?.role === 'SUPER_ADMIN') && (
+            <Link href="/admin/dashboard" title="Overview Dashboard" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname === '/admin/dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+              <IconDashboard size={20} className="shrink-0" />
+              {!collapsed && <span className="font-medium text-sm">Dashboard</span>}
+            </Link>
+          )}
+
+          {(user?.role === 'SUPER_ADMIN' || user?.role === 'SALES_STAFF') && (
+            <Link href="/admin/inventory" title="Inventory Management" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/inventory') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+              <IconCarGarage size={20} className="shrink-0" />
+              {!collapsed && <span className="font-medium text-sm">Vehicles</span>}
+            </Link>
+          )}
+
+          {(user?.role === 'SUPER_ADMIN' || user?.role === 'RENTAL_STAFF') && (
+            <Link href="/admin/rentals" title="Rental Fleet Management" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/rentals') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+              <IconCar size={20} className="shrink-0" />
+              {!collapsed && <span className="font-medium text-sm">Rental</span>}
+            </Link>
+          )}
+
+          {(user?.role === 'SUPER_ADMIN' || user?.role === 'SALES_STAFF' || user?.role === 'RENTAL_STAFF') && (
+            <Link href="/admin/leads" title="CRM Leads" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/leads') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+              <IconUsers size={20} className="shrink-0" />
+              {!collapsed && <span className="font-medium text-sm">CRM Leads</span>}
+            </Link>
+          )}
+
+
+
+          {user?.role === 'SUPER_ADMIN' && (
+            <Link href="/admin/audit-logs" title="System Audit Logs" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/audit-logs') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+              <IconMenu2 size={20} className="shrink-0" />
+              {!collapsed && <span className="font-medium text-sm">System Audit Logs</span>}
+            </Link>
+          )}
+
+          {/* Settings Group */}
+          {user?.role === 'SUPER_ADMIN' && (
+            <div className="pt-4 mt-4 border-t border-slate-800">
+              {!collapsed && <p className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Settings</p>}
+              <Link href="/admin/settings/cms" title="CMS Configuration & Settings" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/settings/cms') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+                <IconSettings size={20} className="shrink-0" />
+                {!collapsed && <span className="font-medium text-sm">CMS Configuration & Settings</span>}
+              </Link>
+              <Link href="/admin/settings/payment-methods" title="Payment Methods" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/settings/payment-methods') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+                <IconCreditCard size={20} className="shrink-0" />
+                {!collapsed && <span className="font-medium text-sm">Payment Methods</span>}
+              </Link>
+              <Link href="/admin/settings/staff" title="Staff Management" className={`flex items-center py-3 rounded-lg transition ${collapsed ? 'justify-center' : 'justify-start gap-3 px-3'} ${pathname.startsWith('/admin/settings/staff') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+                <IconUsers size={20} className="shrink-0" />
+                {!collapsed && <span className="font-medium text-sm">Staff Management</span>}
+              </Link>
+            </div>
+          )}
         </nav>
       </aside>
 

@@ -10,9 +10,9 @@ This project is built using [Turborepo](https://turborepo.org/) and is structure
 - **`apps/api`**: The backend REST API built with [NestJS](https://nestjs.com/), providing robust endpoints, JWT authentication, and global exception handling.
 - **Database Layer**: Managed by [Prisma ORM](https://www.prisma.io/) connecting to a MySQL database, featuring strict uniqueness constraints, soft deletes, and robust relational mapping.
 
-## 🚀 Current Progress: Phase 4 Complete
+## 🚀 Current Progress: Phase 5 & 6 Complete
 
-The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (Vehicle Inventory)**, **Phase 3 (Data & API Foundations)**, and **Phase 4 (Rental Operations, CMS & CRM Sync)**.
+The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (Vehicle Inventory)**, **Phase 3 (Data & API Foundations)**, **Phase 4 (Rental Operations, CMS & CRM Sync)**, **Phase 5 (CMS & Homepage Customization)**, and **Phase 6 (Staff Management & Advanced CRM)**.
 
 ### Features Implemented:
 - **Public & Admin UI:** Beautiful, dynamic Next.js App Router public landing page, sales listing, and vehicle detail pages (`/sales/[slug]`). Admin dashboard for complete vehicle lifecycle management.
@@ -20,15 +20,18 @@ The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (
 - **Inventory CRUD:** Comprehensive vehicle management including specific listings (Sale/Rental/Both), deep `CarType` categorization, and specs tracking.
 - **Image Pipeline:** Full image upload functionality using Multer (supporting JPG, PNG, WebP, JFIF), supporting drag-and-drop ordering (`sortOrder`) and Primary image handling.
 - **Inspections Module:** A dedicated tab for logging detailed vehicle inspection statuses across Engine, Transmission, Suspension, Electrical, A/C, and more.
-- **Leads Module:** Robust API for tracking customer inquiries and auto-generating Reference IDs (e.g. `LD-2026-XYZ12`), with WhatsApp redirect URL builder.
+- **Leads Module & Sales Capture Flow:** Robust API for tracking customer inquiries and auto-generating Reference IDs (e.g. `LD-2026-XYZ12`). Leads from `/sales/[slug]` are fully captured in the database before redirecting to WhatsApp.
+- **Dynamic Inquiry Form:** Strict lead type filters for sales (`SALES_INQUIRY`, `TEST_DRIVE_REQUEST`, `MAKE_OFFER`) with a conditional "Offered Price" input field for user offers.
+- **CMS-driven Settings (WhatsApp):** Removed hardcoded configuration and environment variables. The global WhatsApp number is managed dynamically in the CMS database (`HomepageContent`) and fetched client-side to preserve Next.js 15 ISR (Instant Static Regeneration).
+- **Staff Management (RBAC & Sidebar Sync):** A dedicated User/Staff management portal (`/admin/settings/staff`) for Super Admins to create and manage staff accounts. The admin sidebar dynamically updates navigation links based on user roles (Super Admin, Sales Staff, Rental Staff).
 - **Analytics & Dashboard:** Global Admin Dashboard providing live metrics mapping and inventory distributions. Tracks simple view metrics.
 - **Admin Profile Management:** Integrated user profile editing (name and secure password changes) featuring real-time UI synchronization and strict Zod frontend validation.
 - **DevSecOps Rate Limiting:** Centralized, environment-aware `@nestjs/throttler` architecture featuring strict limiters for authentication (`auth`) and data mutations (`mutate`) to prevent brute-force attacks, scaling dynamically during local development.
 - **Audit & Security:** Automated background tracking of core events. Global exception filters that cleanly catch API errors (including `429 Too Many Requests`) and bubble them seamlessly to the UI.
-- **Rental Operations & Booking Calendar (Phase 4):** Completed long-term rentals, blackout dates management, active booking tables, and dynamic date ranges check-out.
-- **Automated Booking Scheduler (Phase 4)**: Automated background scheduler (cron service) that runs periodically to transition booking states (e.g. `CONFIRMED` -> `ACTIVE` when the vehicle is picked up).
-- **Payment Settings & CRM UI Alignment (Phase 4)**: Aligned and synchronised the payment methods UI with the main rentals portal aesthetics, incorporating shared filters, responsive tables, and custom action modals.
-- **Strict TypeScript Refactoring (Phase 4)**: Eliminated unsafe `@typescript-eslint/no-explicit-any` usage across the frontend pages, ensuring tight mapping of custom schemas with Prisma schemas (such as vehicle types, transmission types, and fuel types).
+- **Rental Operations & Booking Calendar:** Completed long-term rentals, blackout dates management, active booking tables, and dynamic date ranges check-out.
+- **Automated Booking Scheduler**: Automated background scheduler (cron service) that runs periodically to transition booking states (e.g. `CONFIRMED` -> `ACTIVE` when the vehicle is picked up).
+- **Payment Settings & CRM UI Alignment**: Aligned and synchronised the payment methods UI with the main rentals portal aesthetics, incorporating shared filters, responsive tables, and custom action modals.
+- **Strict TypeScript Refactoring**: Clean TypeScript verification (`tsc --noEmit`) throughout frontend and backend services, securing schema bindings and reliable payload handling in generic HTTP utilities.
 
 ## 🛠️ Getting Started
 
@@ -44,12 +47,11 @@ The application has successfully completed **Phase 1 (Foundation)**, **Phase 2 (
    pnpm install
    ```
 
-2. Configure environment variables. Ensure both `apps/api/.env` and `apps/web/.env.local` are set up.
+2. Configure environment variables. Ensure both `apps/api/.env` and `apps/web/.env.local` are set up. Note that global configurations (like the WhatsApp contact number) are managed dynamically in the database via the CMS settings.
    ```env
    # API Example
    DATABASE_URL="mysql://user:password@localhost:3306/soulani_garage"
    JWT_SECRET="your-super-secret-key"
-   WHATSAPP_NUMBER="6281210663530"
    
    # Setup your Admin Credentials before running db seed!
    DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
@@ -79,9 +81,11 @@ pnpm dev
 - The **API** will be available at `http://localhost:3001/api/v1`
 
 ## 🔮 Upcoming Phases
-- **Phase 5:** CMS & Homepage Customization
-- **Phase 6:** Advanced CRM, Notifications & Follow-ups
 - **Phase 7:** Production Hardening & Cloud Deployment
 
+---
+
+## 📚 Documentation Updates
+- Updated `technical_architecture.md`, `business_requirements.md`, and `product_architecture.md` to reflect Phase 5 & 6 outcomes, including unified CRM Leads workspace, column‑level infinite scroll, drag‑and‑drop rollback, strict TypeScript hardening, and RBAC/localization matrix.
 ---
 *Built with ❤️ for Soulani Auto Garage.*

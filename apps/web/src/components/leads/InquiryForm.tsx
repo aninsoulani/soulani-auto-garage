@@ -15,21 +15,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
-const inquirySchema = z.object({
-  customerName: z.string().min(2, 'Nama minimal 2 karakter').max(100),
-  customerPhone: z
-    .string()
-    .regex(/^(\+62|62|0)8[1-9][0-9]{6,10}$/, 'Format nomor HP tidak valid (contoh: 08123456789)'),
-  customerEmail: z.string().email('Email tidak valid').optional().or(z.literal('')),
-  type: z.enum([
-    'SALES_INQUIRY',
-    'TEST_DRIVE_REQUEST',
-    'RENTAL_INQUIRY',
-    'LONG_TERM_QUOTE',
-  ] as const),
-  message: z.string().max(500).optional(),
-  source: z.string().optional(),
-});
+const inquirySchema = z
+  .object({
+    customerName: z.string().min(2, 'Nama minimal 2 karakter').max(100),
+    customerPhone: z
+      .string()
+      .regex(/^(\+62|62|0)8[1-9][0-9]{6,10}$/, 'Format nomor HP tidak valid (contoh: 08123456789)'),
+    customerEmail: z.string().email('Email tidak valid').optional().or(z.literal('')),
+    type: z.enum([
+      'SALES_INQUIRY',
+      'TEST_DRIVE_REQUEST',
+      'MAKE_OFFER',
+      'RENTAL_INQUIRY',
+      'LONG_TERM_QUOTE',
+    ] as const),
+    offeredPrice: z
+      .preprocess(
+        (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
+        z.number({ invalid_type_error: 'Harga penawaran harus berupa angka' }).min(1, 'Harga penawaran harus lebih besar dari 0').optional()
+      ),
+    message: z.string().max(500).optional(),
+    source: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.type === 'MAKE_OFFER' && data.offeredPrice === undefined) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Harga penawaran wajib diisi untuk penawaran harga',
+      path: ['offeredPrice'],
+    }
+  );
 
 type InquiryFormData = z.infer<typeof inquirySchema>;
 
@@ -65,7 +84,7 @@ export default function InquiryForm({
   // Filter options based on listingType
   const allowedTypes: LeadType[] = [];
   if (['SALE', 'BOTH'].includes(listingType)) {
-    allowedTypes.push('SALES_INQUIRY', 'TEST_DRIVE_REQUEST');
+    allowedTypes.push('SALES_INQUIRY', 'TEST_DRIVE_REQUEST', 'MAKE_OFFER');
   }
   if (['RENTAL', 'BOTH'].includes(listingType)) {
     allowedTypes.push('RENTAL_INQUIRY', 'LONG_TERM_QUOTE');
@@ -79,17 +98,19 @@ export default function InquiryForm({
 
   const form = useForm<InquiryFormData>({
     resolver: zodResolver(inquirySchema),
-    defaultValues: { 
-      type: actualDefaultType as 'SALES_INQUIRY' | 'TEST_DRIVE_REQUEST' | 'RENTAL_INQUIRY' | 'LONG_TERM_QUOTE', 
+    defaultValues: {
+      type: actualDefaultType as 'SALES_INQUIRY' | 'TEST_DRIVE_REQUEST' | 'MAKE_OFFER' | 'RENTAL_INQUIRY' | 'LONG_TERM_QUOTE',
       source,
       customerName: '',
       customerPhone: '',
       customerEmail: '',
+      offeredPrice: undefined,
       message: ''
     },
   });
 
   const isSubmitting = form.formState.isSubmitting;
+  const selectedType = form.watch('type');
 
   const onSubmit = async (data: InquiryFormData) => {
     setServerError('');
@@ -100,6 +121,7 @@ export default function InquiryForm({
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         customerEmail: data.customerEmail || undefined,
+        offeredPrice: data.type === 'MAKE_OFFER' ? Number(data.offeredPrice) : undefined,
         message: data.message || undefined,
         source: (data.source as LeadSource) || source,
       });
@@ -196,6 +218,27 @@ export default function InquiryForm({
             </FormItem>
           )}
         />
+
+        {selectedType === 'MAKE_OFFER' && (
+          <FormField
+            control={form.control}
+            name="offeredPrice"
+            render={({ field }) => (
+              <FormItem className="animate-in fade-in slide-in-from-top-2 duration-200">
+                <FormLabel>Harga Penawaran (IDR) <span className="text-rose-500">*</span></FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Contoh: 150000000"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
 
 

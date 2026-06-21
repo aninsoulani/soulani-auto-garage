@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { IconMenu2, IconX, IconMessageCircle, IconCar } from '@tabler/icons-react';
-import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
+import WhatsAppLink from './WhatsAppLink';
 
 const NAV_LINKS = [
   { href: '/sales', label: 'Beli Mobil' },
@@ -71,15 +71,12 @@ export default function Navbar() {
               >
                 Login Admin
               </Link>
-              <a
-                href={buildGenericWhatsAppUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
+              <WhatsAppLink
                 className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-150 active:scale-95"
               >
                 <IconMessageCircle size={16} />
                 Chat Sekarang
-              </a>
+              </WhatsAppLink>
             </div>
 
             {/* Mobile hamburger */}
@@ -116,15 +113,12 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="pt-2 border-t border-slate-100 mt-2">
-              <a
-                href={buildGenericWhatsAppUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
+              <WhatsAppLink
                 className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white text-sm font-semibold px-4 py-3 rounded-xl"
               >
                 <IconMessageCircle size={18} />
                 Chat via WhatsApp
-              </a>
+              </WhatsAppLink>
             </div>
           </div>
         </div>

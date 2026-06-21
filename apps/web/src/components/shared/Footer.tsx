@@ -1,10 +1,12 @@
+'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { IconCar, IconBrandWhatsappFilled, IconBrandInstagram, IconMapPin, IconPhone, IconMail, IconBrandFacebook } from '@tabler/icons-react';
-import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
+import { useCmsStore } from '@/store/cms.store';
 
 const QUICK_LINKS = [
   { href: '/sales', label: 'Mobil Dijual' },
-  { href: '/rental', label: 'Sewa Mobil' },
+  { href: '/sewa-mobil', label: 'Sewa Mobil' },
   { href: '/tentang-kami', label: 'Tentang Kami' },
   { href: '/kontak', label: 'Kontak Kami' },
 ];
@@ -13,7 +15,7 @@ const SOCIAL_LINKS = [
   { href: 'https://instagram.com/', icon: IconBrandInstagram, label: 'Instagram' },
   { href: 'https://facebook.com/', icon: IconBrandFacebook, label: 'Facebook' },
   {
-    href: buildGenericWhatsAppUrl(),
+    href: '#', // placeholder, handled by component
     icon: IconBrandWhatsappFilled,
     label: 'WhatsApp',
   },
@@ -21,6 +23,13 @@ const SOCIAL_LINKS = [
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { whatsappNumber, fetchSettings } = useCmsStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    fetchSettings();
+  }, [fetchSettings]);
 
   return (
     <footer className="bg-slate-900 text-slate-300">
@@ -39,18 +48,24 @@ export default function Footer() {
               untuk memastikan kualitas terbaik.
             </p>
             <div className="flex gap-3 mt-5">
-              {SOCIAL_LINKS.map(({ href, icon: Icon, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="w-9 h-9 bg-slate-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors duration-150"
-                >
-                  <Icon size={16} className="text-slate-300" />
-                </a>
-              ))}
+              {SOCIAL_LINKS.map(({ href, icon: Icon, label }) => {
+                let actualHref = href;
+                if (label === 'WhatsApp' && mounted && whatsappNumber) {
+                  actualHref = `https://wa.me/${whatsappNumber}`;
+                }
+                return (
+                  <a
+                    key={label}
+                    href={actualHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="w-9 h-9 bg-slate-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors duration-150"
+                  >
+                    <Icon size={16} className="text-slate-300" />
+                  </a>
+                );
+              })}
             </div>
           </div>
 
@@ -85,8 +100,11 @@ export default function Footer() {
               </li>
               <li className="flex gap-2 items-center">
                 <IconPhone size={15} className="shrink-0 text-blue-400" />
-                <a href="tel:+6281210663530" className="hover:text-white transition-colors">
-                  +62 812-1066-3530
+                <a
+                  href={mounted && whatsappNumber ? `tel:+${whatsappNumber}` : 'tel:+6280000000'}
+                  className="hover:text-white transition-colors"
+                >
+                  {mounted && whatsappNumber ? `+${whatsappNumber}` : '+62 800-000-0000'}
                 </a>
               </li>
               <li className="flex gap-2 items-center">

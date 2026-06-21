@@ -1,11 +1,22 @@
 'use client';
+import { useEffect } from 'react';
 import { IconMessageCircle } from '@tabler/icons-react';
-import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
+import { useCmsStore } from '@/store/cms.store';
 
 export default function WhatsAppFAB() {
+  const { whatsappNumber, fetchSettings } = useCmsStore();
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const waNumber = whatsappNumber || '';
+  const msg = 'Halo Admin Soulani Auto Garage, saya ingin bertanya tentang mobil yang tersedia.';
+  const href = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
+
   return (
     <a
-      href={buildGenericWhatsAppUrl()}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat via WhatsApp"

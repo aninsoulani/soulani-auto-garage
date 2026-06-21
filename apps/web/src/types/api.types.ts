@@ -51,6 +51,18 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  isActive: boolean;
+}
+
+export interface LeadFollowup {
+  id: number;
+  leadId: number;
+  userId: number;
+  noteText: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  user?: User;
 }
 
 export interface Lead {
@@ -61,12 +73,14 @@ export interface Lead {
   customerName: string;
   customerPhone: string;
   customerEmail: string | null;
+  offeredPrice?: string | null;
   message: string | null;
   adminNotes?: string | null;
   source?: string | null;
   status: LeadStatus;
   createdAt: string;
   vehicle?: Vehicle;
+  followups?: LeadFollowup[];
 }
 
 export interface RentalBooking {
@@ -194,6 +208,7 @@ export interface Testimonial {
   id: number;
   authorName: string;
   authorTitle: string | null;
+  avatarUrl: string | null;
   rating: number;
   quoteText: string;
   isPublished: boolean;
@@ -216,6 +231,7 @@ export interface CreateLeadPayload {
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
+  offeredPrice?: number;
   message?: string;
   source?: LeadSource;
 }

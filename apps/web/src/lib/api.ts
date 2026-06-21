@@ -17,15 +17,30 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1
 
 export async function apiFetch<T>(
   endpoint: string,
-  options?: RequestInit & { token?: string },
+  options?: Omit<RequestInit, 'body'> & { token?: string; body?: unknown },
 ): Promise<T> {
-  const { token, ...fetchOptions } = options || {};
+  const { token, body: rawBody, ...fetchOptions } = options || {};
+  const isFormData = rawBody instanceof FormData;
+
+  let body: BodyInit | null | undefined = undefined;
+  if (rawBody !== undefined) {
+    if (isFormData) {
+      body = rawBody as FormData;
+    } else if (rawBody !== null && typeof rawBody === 'object') {
+      body = JSON.stringify(rawBody);
+    } else {
+      body = rawBody as BodyInit;
+    }
+  }
+
   const res = await fetch(`${API_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
     ...fetchOptions,
+    body,
+    headers: {
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(fetchOptions.headers || {}),
+    },
   });
 
   if (!res.ok) {

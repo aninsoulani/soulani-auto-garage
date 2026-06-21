@@ -21,4 +21,8 @@ export class GetLeadsDto {
   @IsOptional()
   @IsString()
   type?: string;
+
+  @IsOptional()
+  @IsString()
+  sort?: string;
 }

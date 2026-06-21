@@ -25,15 +25,15 @@ const LISTING_INCLUDE = {
     take: 1,
   },
   salesListing: { where: { deletedAt: null } },
-  rentalListing: { 
+  rentalListing: {
     where: { deletedAt: null },
     include: {
       bookings: {
         where: {
           status: BookingStatus.ACTIVE,
-        }
-      }
-    }
+        },
+      },
+    },
   },
 } as const;
 
@@ -78,17 +78,27 @@ export class VehiclesService {
   }
 
   /** Add computed imageUrl to every VehicleImage in a result object and compute active rented status */
-  private enrichImages<T extends { images?: any[], status?: any, rentalListing?: any }>(vehicle: T): T {
+  private enrichImages<
+    T extends { images?: any[]; status?: any; rentalListing?: any },
+  >(vehicle: T): T {
     if (!vehicle) return vehicle;
-    
+
     // Dynamically compute rented status based on exact current time
     let computedStatus = vehicle.status;
-    if (vehicle.status === ('RENTED' as any) || vehicle.status === VehicleStatus.ACTIVE) {
+    if (
+      vehicle.status === ('RENTED' as any) ||
+      vehicle.status === VehicleStatus.ACTIVE
+    ) {
       const now = new Date();
-      const hasActiveBooking = vehicle.rentalListing?.bookings?.some((b: any) => 
-        b.status === 'ACTIVE' && new Date(b.startDate) <= now && new Date(b.endDate) >= now
+      const hasActiveBooking = vehicle.rentalListing?.bookings?.some(
+        (b: any) =>
+          b.status === 'ACTIVE' &&
+          new Date(b.startDate) <= now &&
+          new Date(b.endDate) >= now,
       );
-      computedStatus = hasActiveBooking ? ('RENTED' as any) : VehicleStatus.ACTIVE;
+      computedStatus = hasActiveBooking
+        ? ('RENTED' as any)
+        : VehicleStatus.ACTIVE;
     }
 
     // Safely remove bookings so we don't leak them in public endpoints
@@ -285,8 +295,8 @@ export class VehiclesService {
               status: BookingStatus.ACTIVE,
               startDate: { lte: new Date() },
               endDate: { gte: new Date() },
-            }
-          }
+            },
+          },
         };
       } else {
         where.status = status;
@@ -414,14 +424,16 @@ export class VehiclesService {
         orderBy = { createdAt: 'asc' };
         break;
       case 'price:asc':
-        orderBy = listingType === 'RENTAL'
-          ? { rentalListing: { dailyRate: 'asc' } }
-          : { salesListing: { price: 'asc' } };
+        orderBy =
+          listingType === 'RENTAL'
+            ? { rentalListing: { dailyRate: 'asc' } }
+            : { salesListing: { price: 'asc' } };
         break;
       case 'price:desc':
-        orderBy = listingType === 'RENTAL'
-          ? { rentalListing: { dailyRate: 'desc' } }
-          : { salesListing: { price: 'desc' } };
+        orderBy =
+          listingType === 'RENTAL'
+            ? { rentalListing: { dailyRate: 'desc' } }
+            : { salesListing: { price: 'desc' } };
         break;
       case 'year:asc':
         orderBy = { year: 'asc' };

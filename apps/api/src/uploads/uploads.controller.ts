@@ -19,6 +19,10 @@ const receiptsDir = './uploads/receipts';
 if (!fs.existsSync(receiptsDir)) {
   fs.mkdirSync(receiptsDir, { recursive: true });
 }
+const testimonialsDir = './uploads/testimonials';
+if (!fs.existsSync(testimonialsDir)) {
+  fs.mkdirSync(testimonialsDir, { recursive: true });
+}
 
 @Controller('uploads')
 export class UploadsController {
@@ -89,6 +93,41 @@ export class UploadsController {
     return {
       filePath: file.path,
       fileUrl: `/uploads/receipts/${file.filename}`,
+    };
+  }
+
+  @Public()
+  @Post('avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: testimonialsDir,
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `avatar-${uniqueSuffix}${ext}`);
+        },
+      }),
+      limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/)) {
+          return cb(
+            new BadRequestException('Only image files are allowed!'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    return {
+      filePath: file.path,
+      fileUrl: `/uploads/testimonials/${file.filename}`,
     };
   }
 }

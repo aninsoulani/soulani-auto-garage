@@ -14,7 +14,10 @@ import {
 } from '@nestjs/common';
 import { getThrottlerConfig } from '../config/throttler.config';
 import { Throttle } from '@nestjs/throttler';
-import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
+import {
+  FileInterceptor,
+  FileFieldsInterceptor,
+} from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as fs from 'fs';
@@ -122,12 +125,17 @@ export class RentalBookingsController {
       {
         storage: diskStorage({
           destination: (req, file, cb) => {
-            const dest = file.fieldname === 'proofOfTransfer' ? receiptsDir : licensesDir;
+            const dest =
+              file.fieldname === 'proofOfTransfer' ? receiptsDir : licensesDir;
             cb(null, dest);
           },
           filename: (req, file, cb) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-            cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+            const uniqueSuffix =
+              Date.now() + '-' + Math.round(Math.random() * 1e9);
+            cb(
+              null,
+              `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`,
+            );
           },
         }),
         fileFilter: (req, file, cb) => {

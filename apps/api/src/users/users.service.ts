@@ -54,4 +54,64 @@ export class UsersService {
       },
     });
   }
+
+  async update(
+    id: number,
+    data: {
+      name?: string;
+      email?: string;
+      password?: string;
+      role?: UserRole;
+      isActive?: boolean;
+    },
+  ) {
+    if (data.email) {
+      const exists = await this.prisma.user.findFirst({
+        where: { email: data.email, NOT: { id }, deletedAt: null },
+      });
+      if (exists) {
+        throw new ConflictException('Email already in use');
+      }
+    }
+
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.role !== undefined) updateData.role = data.role;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+    if (data.password) {
+      updateData.passwordHash = await bcrypt.hash(data.password, 12);
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        uuid: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async remove(id: number) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date(), isActive: false },
+      select: {
+        id: true,
+        uuid: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+  }
 }

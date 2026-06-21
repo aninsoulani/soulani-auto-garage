@@ -12,10 +12,9 @@ interface VehicleCTAProps {
   vehicleName: string;
   listingType?: ListingType;
   price: string | null | undefined;
-  whatsappUrl: string;
 }
 
-export default function VehicleCTA({ vehicleId, vehicleName, listingType = 'BOTH', price, whatsappUrl }: VehicleCTAProps) {
+export default function VehicleCTA({ vehicleId, vehicleName, listingType = 'BOTH', price }: VehicleCTAProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
@@ -40,15 +39,14 @@ export default function VehicleCTA({ vehicleId, vehicleName, listingType = 'BOTH
             <p className="text-lg font-extrabold text-slate-900 leading-tight">{formatIDR(price)}</p>
           </div>
         )}
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => setSheetOpen(true)}
+          type="button"
           className={buttonVariants({ variant: 'outline' }) + " flex items-center justify-center w-11 h-11 p-0 bg-[#25D366] hover:bg-[#20b858] border-none shrink-0 rounded-xl"}
           aria-label="Chat via WhatsApp"
         >
           <IconMessageCircle size={20} className="text-white" />
-        </a>
+        </button>
         <Button
           onClick={() => setSheetOpen(true)}
           className="flex-1 py-6 rounded-xl font-bold text-sm"

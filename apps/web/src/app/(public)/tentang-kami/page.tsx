@@ -1,26 +1,10 @@
-import type { Metadata } from 'next';
-import { IconShieldCheck, IconBolt, IconHeart, IconAward, IconMapPin, IconClock } from '@tabler/icons-react';
-import { buildGenericWhatsAppUrl } from '@/lib/whatsapp';
-
-/**
- * About Us — Static content for Phase 3.
- *
- * PHASE 6 MIGRATION NOTE:
- * In Phase 6 (CMS & Analytics), this page should be refactored to fetch
- * content from the HomepageContent table using the following keys:
- *   - `about_hero`: { title, subtitle }
- *   - `about_story`: { text }
- *   - `about_pillars`: { items: [{ icon, title, desc }] }
- *   - `about_showroom`: { address, hours, mapUrl }
- * The CMS admin UI will allow the owner to edit this content from the
- * admin dashboard without code changes or redeployment.
- */
-
-export const metadata: Metadata = {
-  title: 'Tentang Kami — Soulani Auto Garage',
-  description:
-    'Kenali Soulani Auto Garage — platform jual beli dan sewa mobil terpercaya di Indonesia dengan standar inspeksi tertinggi.',
-};
+'use client';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { IconShieldCheck, IconBolt, IconHeart, IconAward, IconMapPin, IconClock, IconMessageCircle } from '@tabler/icons-react';
+import WhatsAppLink from '@/components/shared/WhatsAppLink';
+import { apiFetch } from '@/lib/api';
+import { resolveImageUrl } from '@/lib/images';
+import { Testimonial } from '@/types/api.types';
 
 const PILLARS = [
   {
@@ -51,6 +35,58 @@ const STATS = [
 ];
 
 export default function AboutPage() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const autoplayTimer = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    document.title = 'Tentang Kami — Soulani Auto Garage';
+    loadTestimonials();
+  }, []);
+
+  const loadTestimonials = async () => {
+    try {
+      setLoading(true);
+      const res = await apiFetch<Testimonial[]>('/testimonials/public');
+      setTestimonials(res);
+    } catch (err) {
+      console.error('Failed to load testimonials:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = useCallback(() => {
+    if (testimonials.length === 0) return;
+    setActiveIndex((prev) => (prev + 1) % testimonials.length);
+  }, [testimonials.length]);
+
+  const handlePrev = useCallback(() => {
+    if (testimonials.length === 0) return;
+    setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  }, [testimonials.length]);
+
+  const resetAutoplay = useCallback(() => {
+    if (autoplayTimer.current) {
+      clearInterval(autoplayTimer.current);
+    }
+    autoplayTimer.current = setInterval(() => {
+      handleNext();
+    }, 5000);
+  }, [handleNext]);
+
+  useEffect(() => {
+    if (testimonials.length > 0) {
+      resetAutoplay();
+    }
+    return () => {
+      if (autoplayTimer.current) {
+        clearInterval(autoplayTimer.current);
+      }
+    };
+  }, [testimonials, resetAutoplay]);
+
   return (
     <div>
       {/* Hero */}
@@ -133,6 +169,106 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Dynamic Testimonial Carousel */}
+      <section className="py-16 px-4 bg-white border-y border-slate-100 overflow-hidden">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="text-blue-600 text-sm font-semibold uppercase tracking-wide">Testimoni Pelanggan</span>
+            <h2 className="text-3xl font-bold text-slate-900 mt-2">Apa Kata Mereka Tentang Kami</h2>
+            <p className="text-slate-500 mt-2">Ulasan jujur dari para pelanggan setia Soulani Auto Garage</p>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12 text-slate-400 animate-pulse font-medium">Memuat testimoni...</div>
+          ) : testimonials.length === 0 ? (
+            <div className="text-center py-12 text-slate-400 italic">Belum ada testimoni yang diterbitkan.</div>
+          ) : (
+            <div className="relative bg-slate-50 rounded-3xl p-8 sm:p-12 border border-slate-100 shadow-sm">
+              {/* Carousel Content */}
+              <div className="min-h-[160px] flex flex-col justify-between">
+                <div>
+                  {/* Rating Stars */}
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: testimonials[activeIndex].rating }).map((_, i) => (
+                      <span key={i} className="text-amber-400 text-lg">★</span>
+                    ))}
+                    {Array.from({ length: 5 - testimonials[activeIndex].rating }).map((_, i) => (
+                      <span key={i} className="text-slate-200 text-lg">★</span>
+                    ))}
+                  </div>
+
+                  {/* Quote Message */}
+                  <p className="text-slate-700 text-base sm:text-lg italic leading-relaxed mb-6 font-sans">
+                    &quot;{testimonials[activeIndex].quoteText}&quot;
+                  </p>
+                </div>
+
+                {/* Customer Details */}
+                <div className="flex items-center gap-4 mt-4 border-t border-slate-200/60 pt-4">
+                  {testimonials[activeIndex].avatarUrl ? (
+                    <img
+                      src={resolveImageUrl(testimonials[activeIndex].avatarUrl)}
+                      alt={testimonials[activeIndex].authorName}
+                      className="w-12 h-12 rounded-full object-cover border border-white ring-2 ring-slate-100 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-sm">
+                      {testimonials[activeIndex].authorName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm sm:text-base">{testimonials[activeIndex].authorName}</h4>
+                    {testimonials[activeIndex].authorTitle && (
+                      <p className="text-xs text-slate-500 font-medium">{testimonials[activeIndex].authorTitle}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Arrows */}
+              <div className="absolute right-8 bottom-8 flex gap-2">
+                <button
+                  onClick={() => {
+                    handlePrev();
+                    resetAutoplay();
+                  }}
+                  className="w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+                  aria-label="Previous testimonial"
+                >
+                  ←
+                </button>
+                <button
+                  onClick={() => {
+                    handleNext();
+                    resetAutoplay();
+                  }}
+                  className="w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+                  aria-label="Next testimonial"
+                >
+                  →
+                </button>
+              </div>
+
+              {/* Dot Indicators */}
+              <div className="absolute left-8 bottom-8 flex gap-1.5">
+                {testimonials.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setActiveIndex(index);
+                      resetAutoplay();
+                    }}
+                    className={`h-2 rounded-full transition-all duration-300 ${index === activeIndex ? 'w-6 bg-blue-600' : 'w-2 bg-slate-300 hover:bg-slate-400'
+                      }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Showroom Info */}
       <section className="max-w-4xl mx-auto px-4 py-16">
         <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12">
@@ -159,14 +295,10 @@ export default function AboutPage() {
               </div>
             </div>
             <div>
-              <a
-                href={buildGenericWhatsAppUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-6 py-3.5 rounded-xl transition-all active:scale-95 text-sm"
-              >
-                💬 Hubungi Kami via WhatsApp
-              </a>
+              <WhatsAppLink className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-8 py-4 rounded-xl transition-all active:scale-95 text-lg shadow-lg shadow-green-100">
+                <IconMessageCircle size={24} />
+                Hubungi via WhatsApp
+              </WhatsAppLink>
             </div>
           </div>
         </div>

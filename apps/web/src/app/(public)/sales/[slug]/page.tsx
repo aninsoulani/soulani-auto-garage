@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getVehicleBySlug, getVehicles } from '@/lib/api';
 import { vehicleDisplayName, formatIDR } from '@/lib/utils';
-import { buildVehicleWhatsAppUrl } from '@/lib/whatsapp';
 import VehicleGallery from '@/components/vehicles/VehicleGallery';
 import VehicleSpecGrid from '@/components/vehicles/VehicleSpecGrid';
 import InspectionReportCard from '@/components/vehicles/InspectionReportCard';
@@ -73,7 +72,6 @@ export default async function VehicleDetailPage({
 
   const name = vehicleDisplayName(vehicle);
   const latestInspection = vehicle.inspections?.[0];
-  const whatsappUrl = buildVehicleWhatsAppUrl(vehicle);
   const price = vehicle.salesListing?.price;
 
   // JSON-LD structured data
@@ -191,7 +189,6 @@ export default async function VehicleDetailPage({
                 vehicleName={name}
                 listingType={vehicle.listingType}
                 price={price ?? null}
-                whatsappUrl={whatsappUrl}
               />
             ) : (
               <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">

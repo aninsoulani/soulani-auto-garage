@@ -292,6 +292,7 @@ model Lead {
   customerPhone     String    @map("customer_phone")
   customerEmail     String?   @map("customer_email")
   type              LeadType
+  offeredPrice      Decimal?  @db.Decimal(15, 2) @map("offered_price")
   source            LeadSource?
   status            LeadStatus @default(NEW)
   message           String?    @db.Text
@@ -456,6 +457,7 @@ model Testimonial {
   id          Int       @id @default(autoincrement())
   authorName  String    @map("author_name")
   authorTitle String?   @map("author_title")
+  avatarUrl   String?   @map("avatar_url")
   rating      Int
   quoteText   String    @db.Text @map("quote_text")
   isPublished Boolean   @default(false) @map("is_published")
