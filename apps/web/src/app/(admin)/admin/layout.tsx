@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { IconMenu2, IconDashboard, IconCar, IconUsers, IconLogout, IconChevronDown, IconSettings, IconCalendarEvent, IconCreditCard, IconCarGarage } from '@tabler/icons-react';
+import { IconMenu2, IconDashboard, IconCar, IconUsers, IconLogout, IconChevronDown, IconSettings, IconCreditCard, IconCarGarage } from '@tabler/icons-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';

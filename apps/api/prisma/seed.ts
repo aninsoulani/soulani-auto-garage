@@ -27,10 +27,6 @@ async function main() {
   });
 
   console.log(`✓ Admin user: ${adminEmail}`);
-
-  // ─── Testimonials ─────────────────────────────────────────────────────────
-  // Phase 3: Seeded with static defaults.
-  // Phase 6: Admin UI will allow creating/editing testimonials via CMS.
   const testimonials = [
     {
       authorName: 'Budi Santoso',
@@ -67,7 +63,6 @@ async function main() {
   ];
 
   for (const t of testimonials) {
-    // upsert by authorName as a stable seed identifier
     const existing = await prisma.testimonial.findFirst({ where: { authorName: t.authorName } });
     if (!existing) {
       await prisma.testimonial.create({ data: t });
@@ -76,38 +71,30 @@ async function main() {
 
   console.log(`✓ ${testimonials.length} testimonials seeded`);
 
-  // ─── Homepage Content (CMS-ready) ─────────────────────────────────────────
-  // These key-value pairs power the homepage content.
-  // Phase 3: Seeded with static defaults.
-  // Phase 6: Admin dashboard CMS UI will allow editing these values
-  //          without code changes or redeployment.
-  const homepageContent = [
-    { key: 'hero_title', value: JSON.stringify('Temukan Mobil Impian Anda') },
-    { key: 'hero_subtitle', value: JSON.stringify('Beli atau sewa mobil dengan jaminan inspeksi 150 titik. Harga transparan, proses cepat.') },
-    { key: 'trust_inspection_points', value: JSON.stringify('150') },
-    { key: 'trust_return_days', value: JSON.stringify('5') },
-    { key: 'trust_warranty_months', value: JSON.stringify('12') },
-    // Phase 6: This key replaces NEXT_PUBLIC_WHATSAPP_NUMBER env var
-    { key: 'whatsapp_number', value: JSON.stringify('') },
-    // Phase 6: About Us page content
-    { key: 'about_hero_title', value: JSON.stringify('Tentang Soulani Auto Garage') },
-    { key: 'about_story', value: JSON.stringify('Soulani Auto Garage didirikan dengan satu tujuan sederhana: membuat proses membeli dan menyewa mobil menjadi pengalaman yang menyenangkan, mudah, dan dapat dipercaya.') },
-    // Phase 6: Contact page content
-    { key: 'contact_address', value: JSON.stringify('Jakarta, Indonesia') },
-    { key: 'contact_hours_weekday', value: JSON.stringify('Senin – Sabtu: 09.00 – 18.00') },
-    { key: 'contact_hours_weekend', value: JSON.stringify('Minggu: 10.00 – 15.00') },
-    { key: 'contact_email', value: JSON.stringify('info@soulanigarage.com') },
-  ];
+  const defaultSettings = {
+    whatsappNumber: '6281210663530',
+    heroHeadline: 'Temukan Mobil Impian Anda',
+    heroSubheadline: 'Beli atau sewa mobil dengan jaminan inspeksi 150 titik. Harga transparan, proses cepat.',
+    contactEmail: 'info@soulanigarage.com',
+    contactAddress: 'Jakarta, Indonesia',
+    contactPhone: '+62 800-000-0000',
+    contactHoursWeekday: 'Senin – Sabtu: 09.00 – 18.00',
+    contactHoursWeekend: 'Minggu: 10.00 – 15.00',
+    contactMapsEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.521260322283!2d106.8195613!3d-6.2090581!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f4264b7bec93%3A0xdffa24a3d6d7b038!2sJakarta%2C%20Indonesia!5e0!3m2!1sen!2s!4v1718000000000!5m2!1sen!2s',
+    trustInspectionPoints: '150',
+    trustReturnDays: '5',
+    trustWarrantyMonths: '12',
+    aboutHeroTitle: 'Tentang Soulani Auto Garage',
+    aboutStory: 'Soulani Auto Garage didirikan dengan satu tujuan sederhana: membuat proses membeli dan menyewa mobil menjadi pengalaman yang menyenangkan, mudah, dan dapat dipercaya.'
+  };
 
-  for (const item of homepageContent) {
-    await prisma.homepageContent.upsert({
-      where: { key: item.key },
-      update: { value: item.value },
-      create: item,
-    });
-  }
+  await prisma.homepageContent.upsert({
+    where: { key: 'homepage_settings' },
+    update: { value: defaultSettings },
+    create: { key: 'homepage_settings', value: defaultSettings }
+  });
 
-  console.log(`✓ ${homepageContent.length} homepage content items seeded`);
+  console.log(`✓ Homepage settings seeded`);
   console.log('\nSeed complete ✓');
 }
 

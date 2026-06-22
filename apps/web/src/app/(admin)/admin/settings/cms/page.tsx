@@ -8,9 +8,10 @@ import Swal from 'sweetalert2';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { IconTrash, IconEdit, IconUpload, IconPlus } from '@tabler/icons-react';
+import { IconTrash, IconEdit, IconPlus } from '@tabler/icons-react';
 
 export default function CMSManagementPage() {
   const { accessToken } = useAuthStore();
@@ -21,7 +22,17 @@ export default function CMSManagementPage() {
     whatsappNumber: '',
     heroHeadline: '',
     heroSubheadline: '',
-    contactEmail: ''
+    contactEmail: '',
+    contactAddress: '',
+    contactPhone: '',
+    contactHoursWeekday: '',
+    contactHoursWeekend: '',
+    contactMapsEmbedUrl: '',
+    trustInspectionPoints: '',
+    trustReturnDays: '',
+    trustWarrantyMonths: '',
+    aboutHeroTitle: '',
+    aboutStory: '',
   });
 
   // Testimonials
@@ -54,6 +65,16 @@ export default function CMSManagementPage() {
         heroHeadline: cmsRes.heroHeadline || '',
         heroSubheadline: cmsRes.heroSubheadline || '',
         contactEmail: cmsRes.contactEmail || '',
+        contactAddress: cmsRes.contactAddress || '',
+        contactPhone: cmsRes.contactPhone || '',
+        contactHoursWeekday: cmsRes.contactHoursWeekday || '',
+        contactHoursWeekend: cmsRes.contactHoursWeekend || '',
+        contactMapsEmbedUrl: cmsRes.contactMapsEmbedUrl || '',
+        trustInspectionPoints: cmsRes.trustInspectionPoints || '',
+        trustReturnDays: cmsRes.trustReturnDays || '',
+        trustWarrantyMonths: cmsRes.trustWarrantyMonths || '',
+        aboutHeroTitle: cmsRes.aboutHeroTitle || '',
+        aboutStory: cmsRes.aboutStory || '',
       });
       setTestimonials(testRes);
     } catch (error) {
@@ -198,10 +219,100 @@ export default function CMSManagementPage() {
               onChange={e => setHomepageSettings({...homepageSettings, contactEmail: e.target.value})} 
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Contact Phone</label>
+            <Input 
+              value={homepageSettings.contactPhone || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, contactPhone: e.target.value})} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Contact Address</label>
+            <Input 
+              value={homepageSettings.contactAddress || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, contactAddress: e.target.value})} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Operational Hours (Weekday)</label>
+            <Input 
+              value={homepageSettings.contactHoursWeekday || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, contactHoursWeekday: e.target.value})} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Operational Hours (Weekend)</label>
+            <Input 
+              value={homepageSettings.contactHoursWeekend || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, contactHoursWeekend: e.target.value})} 
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Google Maps Embed URL</label>
+            <Input 
+              value={homepageSettings.contactMapsEmbedUrl || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, contactMapsEmbedUrl: e.target.value})} 
+              placeholder="https://www.google.com/maps/embed?..."
+            />
+          </div>
         </div>
 
         <div className="mt-4 flex justify-end">
           <Button onClick={handleSaveHomepage} className="bg-blue-600 hover:bg-blue-700">Save Settings</Button>
+        </div>
+      </div>
+
+      {/* Trust & About Us Settings */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h2 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Homepage Trust & About Us Settings</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Inspection Points</label>
+            <Input 
+              value={homepageSettings.trustInspectionPoints || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, trustInspectionPoints: e.target.value})} 
+              placeholder="e.g. 150"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Return Guarantee (Days)</label>
+            <Input 
+              value={homepageSettings.trustReturnDays || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, trustReturnDays: e.target.value})} 
+              placeholder="e.g. 5"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Warranty Period (Months)</label>
+            <Input 
+              value={homepageSettings.trustWarrantyMonths || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, trustWarrantyMonths: e.target.value})} 
+              placeholder="e.g. 12"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">About Us Hero Title</label>
+            <Input 
+              value={homepageSettings.aboutHeroTitle || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, aboutHeroTitle: e.target.value})} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">About Us Story</label>
+            <Textarea 
+              value={homepageSettings.aboutStory || ''} 
+              onChange={e => setHomepageSettings({...homepageSettings, aboutStory: e.target.value})} 
+              className="h-28"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <Button onClick={handleSaveHomepage} className="bg-blue-600 hover:bg-blue-700">Save Trust & About Us Settings</Button>
         </div>
       </div>
 
@@ -243,7 +354,9 @@ export default function CMSManagementPage() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {t.avatarUrl ? (
-                        <img src={t.avatarUrl.startsWith('http') ? t.avatarUrl : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}${t.avatarUrl}`} alt={t.authorName} className="w-8 h-8 rounded-full object-cover bg-slate-200" />
+                        <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200">
+                          <Image src={t.avatarUrl.startsWith('http') ? t.avatarUrl : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}${t.avatarUrl}`} alt={t.authorName} fill className="object-cover" unoptimized />
+                        </div>
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">
                           {t.authorName.charAt(0)}
@@ -314,11 +427,15 @@ export default function CMSManagementPage() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Avatar Image (Optional)</label>
                 <div className="flex items-center gap-3">
                   {(avatarFile || currentTestimonial.avatarUrl) && (
-                    <img 
-                      src={avatarFile ? URL.createObjectURL(avatarFile) : (currentTestimonial.avatarUrl?.startsWith('http') ? currentTestimonial.avatarUrl : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}${currentTestimonial.avatarUrl}`)} 
-                      alt="Avatar preview" 
-                      className="w-12 h-12 rounded-full object-cover bg-slate-100 border border-slate-200"
-                    />
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
+                      <Image 
+                        src={avatarFile ? URL.createObjectURL(avatarFile) : (currentTestimonial.avatarUrl?.startsWith('http') ? currentTestimonial.avatarUrl : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}${currentTestimonial.avatarUrl}`)} 
+                        alt="Avatar preview" 
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                   )}
                   <input type="file" accept="image/*" onChange={e => setAvatarFile(e.target.files?.[0] || null)} className="text-sm" />
                 </div>

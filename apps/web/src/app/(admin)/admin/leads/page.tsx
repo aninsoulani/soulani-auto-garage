@@ -8,7 +8,7 @@ import { LeadDetailsPanel } from '@/components/admin/LeadDetailsPanel';
 import { RentalQuoteDetailsPanel } from '@/components/admin/RentalQuoteDetailsPanel';
 import { MarkWonDialog } from '@/components/admin/MarkWonDialog';
 import { MarkLostDialog } from '@/components/admin/MarkLostDialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Swal from 'sweetalert2';
 
 export default function LeadsCRMPage() {

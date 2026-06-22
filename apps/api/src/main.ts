@@ -1,4 +1,9 @@
 import { NestFactory, Reflector } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import basicAuth from 'express-basic-auth';
+import { ConfigService } from '@nestjs/config';
+
+
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -30,6 +35,30 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Swagger setup (development only, with Basic Auth)
+  if (process.env.NODE_ENV !== 'production') {
+    const configService = app.get(ConfigService);
+    const swaggerUser = configService.get<string>('SWAGGER_USER') || 'soulani_dev';
+    const swaggerPass = configService.get<string>('SWAGGER_PASSWORD') || 'secure_swagger_token_2026';
+
+    const config = new DocumentBuilder()
+      .setTitle('Auto Garage API')
+      .setDescription('API documentation')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+
+    app.use(
+      '/api-docs',
+      basicAuth({
+        users: { [swaggerUser]: swaggerPass },
+        challenge: true,
+      }),
+    );
+    SwaggerModule.setup('api-docs', app, document);
+  }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

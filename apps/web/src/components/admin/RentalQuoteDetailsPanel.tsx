@@ -4,7 +4,6 @@ import { Lead, LeadStatus } from '@/types/api.types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IconX, IconSend, IconCar, IconUser, IconPhone, IconMail, IconHistory, IconMessageCircle, IconFileText } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { apiFetch } from '@/lib/api';

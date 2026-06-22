@@ -1,10 +1,12 @@
 'use client';
+import Image from 'next/image';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { IconShieldCheck, IconBolt, IconHeart, IconAward, IconMapPin, IconClock, IconMessageCircle } from '@tabler/icons-react';
 import WhatsAppLink from '@/components/shared/WhatsAppLink';
 import { apiFetch } from '@/lib/api';
 import { resolveImageUrl } from '@/lib/images';
 import { Testimonial } from '@/types/api.types';
+import { useCmsStore } from '@/store/cms.store';
 
 const PILLARS = [
   {
@@ -27,23 +29,31 @@ const PILLARS = [
   },
 ];
 
-const STATS = [
-  { value: '500+', label: 'Kendaraan Terjual' },
-  { value: '1.000+', label: 'Pelanggan Puas' },
-  { value: '5 Tahun', label: 'Pengalaman' },
-  { value: '150 Titik', label: 'Standar Inspeksi' },
-];
-
 export default function AboutPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const autoplayTimer = useRef<NodeJS.Timeout | null>(null);
 
+  const {
+    aboutHeroTitle,
+    aboutStory,
+    trustInspectionPoints,
+    fetchSettings
+  } = useCmsStore();
+
   useEffect(() => {
     document.title = 'Tentang Kami — Soulani Auto Garage';
     loadTestimonials();
-  }, []);
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const stats = [
+    { value: '500+', label: 'Kendaraan Terjual' },
+    { value: '1.000+', label: 'Pelanggan Puas' },
+    { value: '5 Tahun', label: 'Pengalaman' },
+    { value: `${trustInspectionPoints || '150'} Titik`, label: 'Standar Inspeksi' },
+  ];
 
   const loadTestimonials = async () => {
     try {
@@ -93,8 +103,7 @@ export default function AboutPage() {
       <section className="bg-gradient-to-br from-slate-900 to-slate-800 text-white py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight">
-            Tentang Soulani <br />
-            <span className="text-blue-400">Auto Garage</span>
+            {aboutHeroTitle || 'Tentang Soulani Auto Garage'}
           </h1>
           <p className="text-slate-300 text-lg leading-relaxed">
             Kami adalah platform otomotif modern yang menggabungkan kehangatan pelayanan lokal
@@ -106,7 +115,7 @@ export default function AboutPage() {
       {/* Stats */}
       <section className="bg-blue-600 text-white py-10">
         <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-          {STATS.map(({ value, label }) => (
+          {stats.map(({ value, label }) => (
             <div key={label}>
               <p className="text-3xl font-extrabold">{value}</p>
               <p className="text-blue-200 text-sm mt-1">{label}</p>
@@ -124,8 +133,7 @@ export default function AboutPage() {
               Lahir dari kecintaan terhadap otomotif
             </h2>
             <p className="text-slate-600 leading-relaxed mb-4">
-              Soulani Auto Garage didirikan dengan satu tujuan sederhana: membuat proses membeli dan
-              menyewa mobil menjadi pengalaman yang menyenangkan, mudah, dan dapat dipercaya.
+              {aboutStory || 'Soulani Auto Garage didirikan dengan satu tujuan sederhana: membuat proses membeli dan menyewa mobil menjadi pengalaman yang menyenangkan, mudah, dan dapat dipercaya.'}
             </p>
             <p className="text-slate-600 leading-relaxed">
               Kami percaya bahwa setiap orang berhak mendapatkan kendaraan berkualitas dengan harga
@@ -134,7 +142,7 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-8 text-center">
-            <p className="text-6xl font-extrabold text-blue-600 mb-2">150</p>
+            <p className="text-6xl font-extrabold text-blue-600 mb-2">{trustInspectionPoints || '150'}</p>
             <p className="text-lg font-bold text-slate-800">Titik Inspeksi</p>
             <p className="text-slate-500 text-sm mt-2">
               Setiap kendaraan diperiksa secara menyeluruh oleh mekanik berpengalaman sebelum ditawarkan.
@@ -206,11 +214,15 @@ export default function AboutPage() {
                 {/* Customer Details */}
                 <div className="flex items-center gap-4 mt-4 border-t border-slate-200/60 pt-4">
                   {testimonials[activeIndex].avatarUrl ? (
-                    <img
-                      src={resolveImageUrl(testimonials[activeIndex].avatarUrl)}
-                      alt={testimonials[activeIndex].authorName}
-                      className="w-12 h-12 rounded-full object-cover border border-white ring-2 ring-slate-100 shadow-sm"
-                    />
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden border border-white ring-2 ring-slate-100 shadow-sm">
+                      <Image
+                        src={resolveImageUrl(testimonials[activeIndex].avatarUrl)}
+                        alt={testimonials[activeIndex].authorName}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-sm">
                       {testimonials[activeIndex].authorName.charAt(0).toUpperCase()}

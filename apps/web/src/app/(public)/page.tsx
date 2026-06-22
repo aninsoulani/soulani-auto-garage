@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { IconShieldCheck, IconRotateClockwise, IconAward, IconMessageCircle, IconBrandWhatsapp } from '@tabler/icons-react';
-import { getFeaturedVehicles, getNewArrivalVehicles, getTestimonials } from '@/lib/api';
+import { IconShieldCheck, IconRotateClockwise, IconAward, IconBrandWhatsapp } from '@tabler/icons-react';
+import { getFeaturedVehicles, getNewArrivalVehicles, getTestimonials, apiFetch } from '@/lib/api';
 import WhatsAppLink from '@/components/shared/WhatsAppLink';
 import VehicleCard from '@/components/vehicles/VehicleCard';
 import SectionHeader from '@/components/shared/SectionHeader';
@@ -21,8 +21,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Revalidate homepage data hourly
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 // ─── Body Types ──────────────────────────────────────────────────────────────
 
@@ -32,26 +31,6 @@ const BODY_TYPES = [
   { label: 'Hatchback', href: '/sales?carType=HATCHBACK' },
   { label: 'Sedan', href: '/sales?carType=SEDAN' },
   { label: 'Crossover', href: '/sales?carType=CROSSOVER' },
-];
-
-// ─── Trust Items ─────────────────────────────────────────────────────────────
-
-const TRUST_ITEMS = [
-  {
-    icon: IconShieldCheck,
-    title: 'Inspeksi 150 Titik',
-    desc: 'Setiap kendaraan diuji menyeluruh sebelum dijual',
-  },
-  {
-    icon: IconRotateClockwise,
-    title: '5 Hari Uang Kembali',
-    desc: 'Tidak puas? Kembalikan dalam 5 hari',
-  },
-  {
-    icon: IconAward,
-    title: 'Garansi 1 Tahun',
-    desc: 'Proteksi mesin & transmisi selama 12 bulan',
-  },
 ];
 
 // ─── Star Rating Component ────────────────────────────────────────────────────
@@ -98,10 +77,11 @@ function TestimonialCard({ t }: { t: Testimonial }) {
 
 export default async function HomePage() {
   // Parallel data fetching
-  const [featuredVehicles, newArrivals, testimonials] = await Promise.allSettled([
+  const [featuredVehicles, newArrivals, testimonials, cmsSettingsRes] = await Promise.allSettled([
     getFeaturedVehicles(8),
     getNewArrivalVehicles(4),
     getTestimonials(),
+    apiFetch<Record<string, string>>('/cms/homepage', { cache: 'no-store' }),
   ]);
 
   const featured: Vehicle[] =
@@ -110,6 +90,30 @@ export default async function HomePage() {
     newArrivals.status === 'fulfilled' ? newArrivals.value : [];
   const reviews: Testimonial[] =
     testimonials.status === 'fulfilled' ? testimonials.value : [];
+  const cmsSettings: Record<string, string> =
+    cmsSettingsRes.status === 'fulfilled' ? cmsSettingsRes.value : {};
+
+  const trustInspectionPoints = cmsSettings.trustInspectionPoints || '150';
+  const trustReturnDays = cmsSettings.trustReturnDays || '5';
+  const trustWarrantyMonths = cmsSettings.trustWarrantyMonths || '12';
+
+  const trustItems = [
+    {
+      icon: IconShieldCheck,
+      title: `Inspeksi ${trustInspectionPoints} Titik`,
+      desc: 'Setiap kendaraan diuji menyeluruh sebelum dijual',
+    },
+    {
+      icon: IconRotateClockwise,
+      title: `${trustReturnDays} Hari Uang Kembali`,
+      desc: `Tidak puas? Kembalikan dalam ${trustReturnDays} hari`,
+    },
+    {
+      icon: IconAward,
+      title: `Garansi ${Math.round(Number(trustWarrantyMonths) / 12) || 1} Tahun`,
+      desc: `Proteksi mesin & transmisi selama ${trustWarrantyMonths} bulan`,
+    },
+  ];
 
   return (
     <div className="bg-[#F9FAFB]">
@@ -117,11 +121,10 @@ export default async function HomePage() {
       <section className="bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
           <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-3">
-            Temukan Mobil <br className="hidden sm:block" />
-            <span className="text-blue-200">Impian Anda</span>
+            {cmsSettings.heroHeadline || 'Temukan Mobil Impian Anda'}
           </h1>
           <p className="text-blue-100 text-base sm:text-lg mb-8 max-w-lg mx-auto">
-            Beli atau sewa mobil dengan jaminan inspeksi 150 titik. Harga transparan, proses cepat.
+            {cmsSettings.heroSubheadline || 'Beli atau sewa mobil dengan jaminan inspeksi 150 titik. Harga transparan, proses cepat.'}
           </p>
 
           {/* Search bar */}
@@ -155,7 +158,7 @@ export default async function HomePage() {
       <section className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {TRUST_ITEMS.map(({ icon: Icon, title, desc }) => (
+            {trustItems.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-start gap-4">
                 <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
                   <Icon size={22} className="text-blue-600" />

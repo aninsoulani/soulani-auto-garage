@@ -4,14 +4,16 @@ import { useEffect } from 'react';
 import { IconMessageCircle } from '@tabler/icons-react';
 import { useCmsStore } from '@/store/cms.store';
 
-export default function ContactWhatsAppCTA() {
-  const { whatsappNumber, fetchSettings } = useCmsStore();
+export default function ContactWhatsAppCTA({ whatsappNumber }: { whatsappNumber?: string }) {
+  const { whatsappNumber: storeWhatsappNumber, fetchSettings } = useCmsStore();
 
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    if (!whatsappNumber) {
+      fetchSettings();
+    }
+  }, [whatsappNumber, fetchSettings]);
 
-  const waNumber = whatsappNumber || '';
+  const waNumber = whatsappNumber || storeWhatsappNumber || '';
   const msg = 'Halo Admin Soulani Auto Garage, saya ingin bertanya tentang layanan Anda.';
   const href = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
 

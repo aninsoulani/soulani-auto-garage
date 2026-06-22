@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store/auth.store';
 import { getAdminRentalBookings, updateRentalBookingStatus, updateBookingPaperwork } from '@/lib/api';
@@ -52,7 +53,9 @@ function ImagePreviewDialog({ imageUrl, alt }: { imageUrl: string, alt: string }
       <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none">
         <DialogTitle className="sr-only">Image Preview</DialogTitle>
         <DialogDescription className="sr-only">Full size preview of the document</DialogDescription>
-        <img src={imageUrl} alt={alt} className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
+        <div className="relative w-full h-[60vh] rounded-md overflow-hidden bg-black/5">
+          <Image src={imageUrl} alt={alt} fill className="object-contain" unoptimized />
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -179,7 +182,9 @@ function PaperworkForm({ booking, accessToken, onSuccess, onCancel }: PaperworkF
               <FormMessage className="text-xs text-red-400" />
               {licensePreview && (
                 <div className="mt-2">
-                  <img src={licensePreview} alt="KTP Preview" className="h-20 w-auto rounded border border-slate-200 object-cover" />
+                  <div className="relative h-20 w-32 rounded border border-slate-200 overflow-hidden bg-slate-100">
+                    <Image src={licensePreview} alt="KTP Preview" fill className="object-cover" unoptimized />
+                  </div>
                   <ImagePreviewDialog imageUrl={licensePreview} alt="KTP Full Size Preview" />
                 </div>
               )}
@@ -207,7 +212,9 @@ function PaperworkForm({ booking, accessToken, onSuccess, onCancel }: PaperworkF
               <FormMessage className="text-xs text-red-400" />
               {transferPreview && (
                 <div className="mt-2">
-                  <img src={transferPreview} alt="Transfer Preview" className="h-20 w-auto rounded border border-slate-200 object-cover" />
+                  <div className="relative h-20 w-32 rounded border border-slate-200 overflow-hidden bg-slate-100">
+                    <Image src={transferPreview} alt="Transfer Preview" fill className="object-cover" unoptimized />
+                  </div>
                   <ImagePreviewDialog imageUrl={transferPreview} alt="Transfer Full Size Preview" />
                 </div>
               )}
@@ -346,7 +353,9 @@ function BookingDetailsSheetContent({
                 <p className="text-sm text-slate-500 mb-2">KTP/SIM Photo</p>
                 {booking.licenseImageUrl ? (
                   <div>
-                    <img src={booking.licenseImageUrl} alt="KTP/SIM" className="w-full rounded-lg border border-slate-200 object-cover" />
+                    <div className="relative w-full h-[300px] rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
+                      <Image src={booking.licenseImageUrl} alt="KTP/SIM" fill className="object-contain" unoptimized />
+                    </div>
                     <div className="mt-2 flex">
                       <Button size="sm" variant="outline" className="w-full flex items-center justify-center gap-2" onClick={() => handleDownload(booking.licenseImageUrl!, 'ktp-sim.png')}>
                         <IconDownload size={16} /> Download File
@@ -361,7 +370,9 @@ function BookingDetailsSheetContent({
                 <p className="text-sm text-slate-500 mb-2">Proof of Transfer</p>
                 {booking.proofOfTransferUrl ? (
                   <div>
-                    <img src={booking.proofOfTransferUrl} alt="Proof of Transfer" className="w-full rounded-lg border border-slate-200 object-cover" />
+                    <div className="relative w-full h-[300px] rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
+                      <Image src={booking.proofOfTransferUrl} alt="Proof of Transfer" fill className="object-contain" unoptimized />
+                    </div>
                     <div className="mt-2 flex">
                       <Button size="sm" variant="outline" className="w-full flex items-center justify-center gap-2" onClick={() => handleDownload(booking.proofOfTransferUrl!, 'bukti-transfer.png')}>
                         <IconDownload size={16} /> Download File
