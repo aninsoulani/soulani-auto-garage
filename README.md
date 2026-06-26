@@ -91,8 +91,4 @@ pnpm dev
 - **Phase 7:** Production Hardening & Cloud Deployment
 
 ---
-
-## 📚 Documentation Updates
-- Updated `technical_architecture.md`, `business_requirements.md`, and `product_architecture.md` to reflect Phase 5 & 6 outcomes, including unified CRM Leads workspace, column‑level infinite scroll, drag‑and‑drop rollback, strict TypeScript hardening, and RBAC/localization matrix.
----
 *Built with ❤️ for Soulani Auto Garage.*
